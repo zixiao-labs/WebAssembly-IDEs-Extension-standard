@@ -93,9 +93,33 @@ cargo build --target wasm32-wasip2
 
 ## Reference Implementations
 
-| IDE | Status | Repository |
-|-----|--------|------------|
-| Logos | In Development | [zixiao-labs/logos](https://github.com/zixiao-labs/logos) |
+| IDE | Status | Repository | Notes |
+|-----|--------|------------|-------|
+| Logos | In Development | [zixiao-labs/logos](https://github.com/zixiao-labs/logos) | Reference implementation with full permission model |
+
+### Logos Implementation
+
+The Logos IDE implements this standard via `wasmExtensionService.ts`:
+
+- **Permission checking**: Fine-grained capability-based access control
+- **Host functions**: WIT interface implementations for WASM imports
+- **Extension lifecycle**: Install, activate, deactivate, uninstall
+- **IPC bridge**: `window.electronAPI.wasmExtensions.*` for renderer access
+
+```typescript
+// Example: List and activate a WASM extension
+const extensions = await window.electronAPI.wasmExtensions.list()
+for (const ext of extensions) {
+  // Grant required permissions
+  for (const perm of ext.permissions) {
+    if (!perm.granted) {
+      await window.electronAPI.wasmExtensions.grantPermission(ext.id, perm.permission)
+    }
+  }
+  // Activate
+  await window.electronAPI.wasmExtensions.activate(ext.id)
+}
+```
 
 ## Related Work
 
