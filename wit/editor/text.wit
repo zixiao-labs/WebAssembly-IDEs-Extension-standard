@@ -1,0 +1,86 @@
+/// Editor Text Interface
+///
+/// Provides text manipulation capabilities.
+/// Requires permission: editor:read or editor:write
+
+package ide-extension:editor@0.1.0;
+
+/// A position in a text document (0-indexed)
+record position {
+    line: u32,
+    character: u32,
+}
+
+/// A range in a text document
+record range {
+    start: position,
+    end: position,
+}
+
+/// A text edit operation
+record text-edit {
+    range: range,
+    new-text: string,
+}
+
+/// End of line sequence
+enum eol {
+    lf,
+    crlf,
+}
+
+/// Text document information
+record text-document {
+    /// URI of the document
+    uri: string,
+    /// Language identifier (e.g., "typescript", "rust")
+    language-id: string,
+    /// Version number (increments with each change)
+    version: u32,
+    /// Line count
+    line-count: u32,
+    /// End of line sequence
+    eol: eol,
+    /// Whether the document has unsaved changes
+    is-dirty: bool,
+}
+
+/// Text document content interface.
+interface text {
+    /// Get the currently active text document.
+    get-active-document: func() -> option<text-document>;
+
+    /// Get a text document by URI.
+    get-document: func(uri: string) -> option<text-document>;
+
+    /// Get all open text documents.
+    get-open-documents: func() -> list<text-document>;
+
+    /// Get the full text content of a document.
+    /// Requires: editor:read
+    get-text: func(uri: string) -> result<string, string>;
+
+    /// Get text in a specific range.
+    /// Requires: editor:read
+    get-text-in-range: func(uri: string, range: range) -> result<string, string>;
+
+    /// Get a specific line of text.
+    /// Requires: editor:read
+    get-line: func(uri: string, line: u32) -> result<string, string>;
+
+    /// Apply text edits to a document.
+    /// Requires: editor:write
+    apply-edits: func(uri: string, edits: list<text-edit>) -> result<bool, string>;
+
+    /// Insert text at a position.
+    /// Requires: editor:write
+    insert: func(uri: string, position: position, text: string) -> result<bool, string>;
+
+    /// Delete text in a range.
+    /// Requires: editor:write
+    delete: func(uri: string, range: range) -> result<bool, string>;
+
+    /// Replace text in a range.
+    /// Requires: editor:write
+    replace: func(uri: string, range: range, text: string) -> result<bool, string>;
+}

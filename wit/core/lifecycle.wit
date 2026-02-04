@@ -1,0 +1,33 @@
+/// Core Lifecycle Interface
+///
+/// Provides lifecycle management for extensions. This interface is
+/// always available and does not require permissions.
+
+package ide-extension:core@0.1.0;
+
+/// Lifecycle events and hooks for extensions.
+interface lifecycle {
+    /// Reason for deactivation
+    enum deactivation-reason {
+        /// User disabled the extension
+        user-disabled,
+        /// IDE is shutting down
+        shutdown,
+        /// Extension was uninstalled
+        uninstalled,
+        /// Extension crashed or errored
+        error,
+    }
+
+    /// Subscribe to activation event.
+    /// Called once when the extension is first activated.
+    on-activate: func() -> result<_, string>;
+
+    /// Subscribe to deactivation event.
+    /// Called before the extension is deactivated.
+    /// Extensions should clean up resources here.
+    on-deactivate: func(reason: deactivation-reason);
+
+    /// Check if the extension is currently active.
+    is-active: func() -> bool;
+}

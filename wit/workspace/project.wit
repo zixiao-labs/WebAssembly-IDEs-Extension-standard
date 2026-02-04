@@ -1,0 +1,51 @@
+/// Workspace Project Interface
+///
+/// Provides project-level information and operations.
+/// Requires permission: workspace:read
+
+package ide-extension:workspace@0.1.0;
+
+/// Project configuration
+record project-info {
+    /// Project name
+    name: string,
+    /// Project root URI
+    root-uri: string,
+    /// Detected project type (e.g., "npm", "cargo", "gradle")
+    project-type: option<string>,
+}
+
+/// Configuration value types
+variant config-value {
+    string-val(string),
+    number-val(float64),
+    bool-val(bool),
+    array-val(list<config-value>),
+    object-val(string),  // JSON-encoded object
+}
+
+/// Project interface.
+interface project {
+    /// Get information about the current project.
+    get-project-info: func() -> option<project-info>;
+
+    /// Get a configuration value.
+    /// The section is like "editor.fontSize" or "myExtension.setting"
+    get-config: func(section: string) -> option<config-value>;
+
+    /// Update a configuration value.
+    /// Requires: workspace:write-config
+    set-config: func(
+        section: string,
+        value: config-value,
+        workspace-scope: bool
+    ) -> result<_, string>;
+
+    /// Find files matching a glob pattern.
+    /// Requires: workspace:read
+    find-files: func(
+        include-pattern: string,
+        exclude-pattern: option<string>,
+        max-results: option<u32>
+    ) -> result<list<string>, string>;
+}

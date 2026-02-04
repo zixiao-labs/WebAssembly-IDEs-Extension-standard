@@ -1,0 +1,70 @@
+/// Editor Decorations Interface
+///
+/// Provides text decoration capabilities (highlights, underlines, etc.).
+/// Requires permission: editor:decorations
+
+package ide-extension:editor@0.1.0;
+
+use text.{range};
+
+/// Decoration render options
+record decoration-render-options {
+    /// Background color (CSS color string)
+    background-color: option<string>,
+    /// Border color
+    border-color: option<string>,
+    /// Border style (e.g., "solid", "dashed")
+    border-style: option<string>,
+    /// Border width
+    border-width: option<string>,
+    /// Text color
+    color: option<string>,
+    /// Font style (e.g., "italic")
+    font-style: option<string>,
+    /// Font weight (e.g., "bold")
+    font-weight: option<string>,
+    /// Text decoration (e.g., "underline", "line-through")
+    text-decoration: option<string>,
+    /// Outline color
+    outline-color: option<string>,
+    /// CSS class name (IDE-specific)
+    css-class: option<string>,
+    /// Content to render before the text
+    before-content: option<string>,
+    /// Content to render after the text
+    after-content: option<string>,
+    /// Whether this decoration is on the whole line
+    is-whole-line: bool,
+}
+
+/// A decoration type handle
+type decoration-type = u32;
+
+/// A decoration instance
+record decoration {
+    /// Range to decorate
+    range: range,
+    /// Hover message (markdown supported)
+    hover-message: option<string>,
+    /// Override render options for this specific decoration
+    render-options: option<decoration-render-options>,
+}
+
+/// Decorations interface.
+interface decorations {
+    /// Create a new decoration type.
+    create-decoration-type: func(options: decoration-render-options) -> decoration-type;
+
+    /// Set decorations for a decoration type in a document.
+    set-decorations: func(
+        uri: string,
+        decoration-type: decoration-type,
+        decorations: list<decoration>
+    ) -> result<_, string>;
+
+    /// Clear all decorations of a type in a document.
+    clear-decorations: func(uri: string, decoration-type: decoration-type) -> result<_, string>;
+
+    /// Dispose of a decoration type (removes all its decorations).
+    dispose-decoration-type: func(decoration-type: decoration-type);
+}

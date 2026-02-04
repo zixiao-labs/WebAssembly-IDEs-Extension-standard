@@ -1,0 +1,113 @@
+/// Workspace Filesystem Interface
+///
+/// Provides file system access within the workspace.
+/// Requires permission: workspace:read or workspace:write
+
+package ide-extension:workspace@0.1.0;
+
+/// File type enumeration
+enum file-type {
+    file,
+    directory,
+    symlink,
+    unknown,
+}
+
+/// File system entry metadata
+record file-stat {
+    /// File type
+    file-type: file-type,
+    /// Creation time (Unix timestamp in milliseconds)
+    ctime: u64,
+    /// Modification time (Unix timestamp in milliseconds)
+    mtime: u64,
+    /// File size in bytes
+    size: u64,
+    /// Whether the file is read-only
+    readonly: bool,
+}
+
+/// Directory entry
+record dir-entry {
+    /// Entry name (not full path)
+    name: string,
+    /// File type
+    file-type: file-type,
+}
+
+/// File change type for watch events
+enum file-change-type {
+    created,
+    changed,
+    deleted,
+}
+
+/// File change event
+record file-change-event {
+    /// URI of the changed file
+    uri: string,
+    /// Type of change
+    change-type: file-change-type,
+}
+
+/// File watcher handle
+type watcher-handle = u32;
+
+/// Filesystem interface.
+interface filesystem {
+    /// Get the workspace root URI.
+    get-workspace-root: func() -> option<string>;
+
+    /// Get all workspace folder URIs (for multi-root workspaces).
+    get-workspace-folders: func() -> list<string>;
+
+    /// Check if a path exists.
+    exists: func(uri: string) -> bool;
+
+    /// Get file/directory metadata.
+    stat: func(uri: string) -> result<file-stat, string>;
+
+    /// Read a file as UTF-8 text.
+    /// Requires: workspace:read
+    read-file: func(uri: string) -> result<string, string>;
+
+    /// Read a file as binary data.
+    /// Requires: workspace:read
+    read-file-binary: func(uri: string) -> result<list<u8>, string>;
+
+    /// Write text to a file.
+    /// Requires: workspace:write
+    write-file: func(uri: string, content: string) -> result<_, string>;
+
+    /// Write binary data to a file.
+    /// Requires: workspace:write
+    write-file-binary: func(uri: string, content: list<u8>) -> result<_, string>;
+
+    /// Delete a file or directory.
+    /// Requires: workspace:write
+    delete: func(uri: string, recursive: bool) -> result<_, string>;
+
+    /// Rename/move a file or directory.
+    /// Requires: workspace:write
+    rename: func(old-uri: string, new-uri: string, overwrite: bool) -> result<_, string>;
+
+    /// Create a directory.
+    /// Requires: workspace:write
+    create-directory: func(uri: string) -> result<_, string>;
+
+    /// Read directory contents.
+    /// Requires: workspace:read
+    read-directory: func(uri: string) -> result<list<dir-entry>, string>;
+
+    /// Copy a file or directory.
+    /// Requires: workspace:write
+    copy: func(source: string, destination: string, overwrite: bool) -> result<_, string>;
+
+    /// Watch for file changes.
+    /// Requires: workspace:read
+    /// Returns a watcher handle that can be used to stop watching.
+    watch: func(glob-pattern: string) -> result<watcher-handle, string>;
+
+    /// Stop watching for file changes.
+    unwatch: func(handle: watcher-handle) -> result<_, string>;
+}

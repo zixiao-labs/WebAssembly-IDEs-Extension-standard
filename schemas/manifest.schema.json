@@ -1,0 +1,267 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ide-extension-standard.org/schemas/manifest.schema.json",
+  "title": "IDE Extension Manifest",
+  "description": "Schema for IDE extension manifest files (extension.json)",
+  "type": "object",
+  "required": ["name", "version", "runtime", "main", "standardVersion"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Unique extension identifier",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "displayName": {
+      "type": "string",
+      "description": "Human-readable display name",
+      "maxLength": 128
+    },
+    "description": {
+      "type": "string",
+      "description": "Brief description of the extension",
+      "maxLength": 512
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version (major.minor.patch)",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
+    },
+    "publisher": {
+      "type": "string",
+      "description": "Publisher or author identifier",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "maxLength": 64
+    },
+    "license": {
+      "type": "string",
+      "description": "SPDX license identifier"
+    },
+    "repository": {
+      "type": "string",
+      "description": "Source repository URL",
+      "format": "uri"
+    },
+    "homepage": {
+      "type": "string",
+      "description": "Extension homepage URL",
+      "format": "uri"
+    },
+    "icon": {
+      "type": "string",
+      "description": "Path to icon file (PNG, 128x128 or 256x256)"
+    },
+    "runtime": {
+      "type": "string",
+      "description": "WebAssembly target runtime",
+      "enum": ["wasm32-wasi"]
+    },
+    "main": {
+      "type": "string",
+      "description": "Path to main WASM module",
+      "pattern": "^[^/].*\\.wasm$"
+    },
+    "standardVersion": {
+      "type": "string",
+      "description": "Minimum required standard version",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+    },
+    "engines": {
+      "type": "object",
+      "description": "Compatibility requirements",
+      "properties": {
+        "ide-extension-standard": {
+          "type": "string",
+          "description": "Standard version requirement (semver range)"
+        }
+      },
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "categories": {
+      "type": "array",
+      "description": "Extension categories",
+      "items": {
+        "type": "string",
+        "enum": [
+          "Programming Languages",
+          "Snippets",
+          "Linters",
+          "Themes",
+          "Debuggers",
+          "Formatters",
+          "Keymaps",
+          "SCM Providers",
+          "Other"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "permissions": {
+      "type": "array",
+      "description": "Required permissions",
+      "items": {
+        "type": "string",
+        "pattern": "^(core|storage|editor|workspace|ui|language|network|bundle):[a-z*-]+(:[a-zA-Z0-9.*-]+)?$"
+      },
+      "uniqueItems": true
+    },
+    "activationEvents": {
+      "type": "array",
+      "description": "Events that trigger activation",
+      "items": {
+        "type": "string",
+        "pattern": "^(onStartup|onLanguage:[a-zA-Z0-9-]+|onCommand:[a-zA-Z0-9.-]+|workspaceContains:.+|onFileOpen:.+)$"
+      },
+      "uniqueItems": true
+    },
+    "contributes": {
+      "type": "object",
+      "description": "Static contributions",
+      "properties": {
+        "commands": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/command"
+          }
+        },
+        "menus": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/menuItem"
+            }
+          }
+        },
+        "keybindings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/keybinding"
+          }
+        },
+        "languages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/language"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "command": {
+      "type": "object",
+      "required": ["id", "title"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique command identifier",
+          "pattern": "^[a-zA-Z][a-zA-Z0-9.-]*$"
+        },
+        "title": {
+          "type": "string",
+          "description": "Display title"
+        },
+        "category": {
+          "type": "string",
+          "description": "Category for grouping"
+        },
+        "icon": {
+          "type": "string",
+          "description": "Icon identifier or path"
+        }
+      }
+    },
+    "menuItem": {
+      "type": "object",
+      "required": ["command"],
+      "properties": {
+        "command": {
+          "type": "string",
+          "description": "Command to execute"
+        },
+        "group": {
+          "type": "string",
+          "description": "Menu group"
+        },
+        "when": {
+          "type": "string",
+          "description": "Visibility condition"
+        },
+        "order": {
+          "type": "integer",
+          "description": "Order within group"
+        }
+      }
+    },
+    "keybinding": {
+      "type": "object",
+      "required": ["command", "key"],
+      "properties": {
+        "command": {
+          "type": "string",
+          "description": "Command to execute"
+        },
+        "key": {
+          "type": "string",
+          "description": "Key combination"
+        },
+        "mac": {
+          "type": "string",
+          "description": "Mac-specific key combination"
+        },
+        "linux": {
+          "type": "string",
+          "description": "Linux-specific key combination"
+        },
+        "win": {
+          "type": "string",
+          "description": "Windows-specific key combination"
+        },
+        "when": {
+          "type": "string",
+          "description": "When clause for context"
+        }
+      }
+    },
+    "language": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Language identifier"
+        },
+        "aliases": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Alternative names"
+        },
+        "extensions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^\\..+$"
+          },
+          "description": "File extensions"
+        },
+        "filenames": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Exact filenames"
+        },
+        "configuration": {
+          "type": "string",
+          "description": "Path to language configuration file"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,48 @@
+/// Editor Selection Interface
+///
+/// Provides selection and cursor manipulation.
+/// Requires permission: editor:read or editor:write
+
+package ide-extension:editor@0.1.0;
+
+use text.{position, range};
+
+/// A selection in a text editor
+record selection {
+    /// The position where the selection started (anchor)
+    anchor: position,
+    /// The position where the selection ended (active/cursor)
+    active: position,
+    /// Whether the selection is reversed (anchor > active)
+    is-reversed: bool,
+}
+
+/// Selection interface.
+interface selection {
+    /// Get the primary selection in the active editor.
+    get-selection: func() -> option<selection>;
+
+    /// Get all selections in the active editor (for multi-cursor).
+    get-selections: func() -> list<selection>;
+
+    /// Set the primary selection.
+    /// Requires: editor:write
+    set-selection: func(sel: selection) -> result<_, string>;
+
+    /// Set multiple selections (multi-cursor).
+    /// Requires: editor:write
+    set-selections: func(sels: list<selection>) -> result<_, string>;
+
+    /// Get the current cursor position (same as selection.active).
+    get-cursor-position: func() -> option<position>;
+
+    /// Set the cursor position (creates an empty selection).
+    /// Requires: editor:write
+    set-cursor-position: func(pos: position) -> result<_, string>;
+
+    /// Reveal a range in the editor (scroll into view).
+    reveal-range: func(range: range) -> result<_, string>;
+
+    /// Get the visible range in the editor.
+    get-visible-range: func() -> option<range>;
+}

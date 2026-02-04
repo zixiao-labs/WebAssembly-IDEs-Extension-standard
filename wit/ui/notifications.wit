@@ -1,0 +1,87 @@
+/// UI Notifications Interface
+///
+/// Provides notification display capabilities.
+/// Requires permission: ui:notifications
+
+package ide-extension:ui@0.1.0;
+
+/// Notification severity level
+enum notification-severity {
+    info,
+    warning,
+    error,
+}
+
+/// A notification action button
+record notification-action {
+    /// Button label
+    label: string,
+    /// Action identifier (returned when clicked)
+    id: string,
+}
+
+/// Notification options
+record notification-options {
+    /// Whether the notification should be modal (blocking)
+    modal: bool,
+    /// Action buttons to show
+    actions: list<notification-action>,
+}
+
+/// Progress location
+enum progress-location {
+    /// Show in the notification area
+    notification,
+    /// Show in the status bar
+    status-bar,
+    /// Show in the source control view
+    source-control,
+    /// Show in a window/editor
+    window,
+}
+
+/// Progress options
+record progress-options {
+    /// Location to show progress
+    location: progress-location,
+    /// Title of the progress
+    title: string,
+    /// Whether the progress can be cancelled
+    cancellable: bool,
+}
+
+/// Progress handle for reporting progress
+type progress-handle = u32;
+
+/// Notifications interface.
+interface notifications {
+    /// Show an information notification.
+    show-info: func(message: string) -> result<option<string>, string>;
+
+    /// Show a warning notification.
+    show-warning: func(message: string) -> result<option<string>, string>;
+
+    /// Show an error notification.
+    show-error: func(message: string) -> result<option<string>, string>;
+
+    /// Show a notification with options.
+    /// Returns the ID of the clicked action, or none if dismissed.
+    show-notification: func(
+        severity: notification-severity,
+        message: string,
+        options: notification-options
+    ) -> result<option<string>, string>;
+
+    /// Start a progress notification.
+    /// Returns a handle to update/complete the progress.
+    start-progress: func(options: progress-options) -> result<progress-handle, string>;
+
+    /// Report progress (0-100).
+    report-progress: func(handle: progress-handle, percentage: u32, message: option<string>) -> result<_, string>;
+
+    /// Complete a progress notification.
+    end-progress: func(handle: progress-handle) -> result<_, string>;
+
+    /// Set the status bar message.
+    set-status-bar-message: func(message: string, timeout-ms: option<u32>) -> result<_, string>;
+}

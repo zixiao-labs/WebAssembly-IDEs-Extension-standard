@@ -1,0 +1,73 @@
+/// UI Webview Interface
+///
+/// Provides webview panel capabilities for custom UI.
+/// Requires permission: ui:webview
+
+package ide-extension:ui@0.1.0;
+
+/// Webview panel options
+record webview-options {
+    /// Whether scripts are enabled in the webview
+    enable-scripts: bool,
+    /// Whether forms are enabled
+    enable-forms: bool,
+    /// Local resource roots (URIs that can be loaded)
+    local-resource-roots: list<string>,
+    /// Whether to retain context when hidden
+    retain-context-when-hidden: bool,
+}
+
+/// Webview panel handle
+type webview-handle = u32;
+
+/// View column for positioning
+enum view-column {
+    /// Active column
+    active,
+    /// Beside the active column
+    beside,
+    /// First column
+    one,
+    /// Second column
+    two,
+    /// Third column
+    three,
+}
+
+/// Webview interface.
+interface webview {
+    /// Create a webview panel.
+    create-webview-panel: func(
+        view-type: string,
+        title: string,
+        column: view-column,
+        options: webview-options
+    ) -> result<webview-handle, string>;
+
+    /// Set the HTML content of a webview.
+    set-html: func(handle: webview-handle, html: string) -> result<_, string>;
+
+    /// Post a message to the webview.
+    post-message: func(handle: webview-handle, message: string) -> result<_, string>;
+
+    /// Set the title of a webview.
+    set-title: func(handle: webview-handle, title: string) -> result<_, string>;
+
+    /// Reveal a webview panel.
+    reveal: func(handle: webview-handle, column: option<view-column>) -> result<_, string>;
+
+    /// Dispose of a webview panel.
+    dispose: func(handle: webview-handle) -> result<_, string>;
+}
+
+/// Webview message handler that extensions export.
+interface webview-handler {
+    /// Handle a message from a webview.
+    on-webview-message: func(handle: webview-handle, message: string);
+
+    /// Called when a webview's visibility changes.
+    on-webview-visibility-change: func(handle: webview-handle, visible: bool);
+
+    /// Called when a webview is disposed.
+    on-webview-dispose: func(handle: webview-handle);
+}

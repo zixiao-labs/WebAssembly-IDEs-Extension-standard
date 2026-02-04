@@ -1,0 +1,63 @@
+/// Network WebSocket Interface
+///
+/// Provides WebSocket capabilities.
+/// Requires permission: network:websocket or network:websocket:<domain>
+
+package ide-extension:network@0.1.0;
+
+/// WebSocket handle
+type websocket-handle = u32;
+
+/// WebSocket ready state
+enum websocket-state {
+    connecting,
+    open,
+    closing,
+    closed,
+}
+
+/// WebSocket close code
+record close-info {
+    /// Close code
+    code: u16,
+    /// Close reason
+    reason: string,
+    /// Whether close was clean
+    was-clean: bool,
+}
+
+/// WebSocket message type
+variant websocket-message {
+    text(string),
+    binary(list<u8>),
+}
+
+/// WebSocket interface.
+interface websocket {
+    /// Connect to a WebSocket server.
+    connect: func(url: string, protocols: list<string>) -> result<websocket-handle, string>;
+
+    /// Send a message through a WebSocket.
+    send: func(handle: websocket-handle, message: websocket-message) -> result<_, string>;
+
+    /// Close a WebSocket connection.
+    close: func(handle: websocket-handle, code: option<u16>, reason: option<string>) -> result<_, string>;
+
+    /// Get the current state of a WebSocket.
+    get-state: func(handle: websocket-handle) -> websocket-state;
+}
+
+/// WebSocket event handler that extensions export.
+interface websocket-handler {
+    /// Called when a WebSocket connection is established.
+    on-open: func(handle: websocket-handle);
+
+    /// Called when a message is received.
+    on-message: func(handle: websocket-handle, message: websocket-message);
+
+    /// Called when the WebSocket connection is closed.
+    on-close: func(handle: websocket-handle, info: close-info);
+
+    /// Called when an error occurs.
+    on-error: func(handle: websocket-handle, error: string);
+}

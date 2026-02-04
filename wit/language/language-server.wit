@@ -1,0 +1,56 @@
+/// Language Server Interface
+///
+/// For extensions that implement a full language server.
+/// Requires permission: language:*
+
+package ide-extension:language@0.1.0;
+
+/// Language server capabilities
+record language-server-capabilities {
+    /// Supported language identifiers
+    language-ids: list<string>,
+    /// Whether the server supports completion
+    completion: bool,
+    /// Whether the server supports hover
+    hover: bool,
+    /// Whether the server supports go-to-definition
+    definition: bool,
+    /// Whether the server supports find references
+    references: bool,
+    /// Whether the server supports document symbols
+    document-symbols: bool,
+    /// Whether the server supports workspace symbols
+    workspace-symbols: bool,
+    /// Whether the server supports diagnostics
+    diagnostics: bool,
+    /// Whether the server supports code actions
+    code-actions: bool,
+    /// Whether the server supports formatting
+    formatting: bool,
+    /// Whether the server supports rename
+    rename: bool,
+}
+
+/// Language server interface that extensions export.
+interface language-server {
+    /// Get the capabilities of this language server.
+    get-capabilities: func() -> language-server-capabilities;
+
+    /// Initialize the language server with workspace folders.
+    initialize: func(workspace-folders: list<string>) -> result<_, string>;
+
+    /// Shutdown the language server.
+    shutdown: func();
+
+    /// Notify that a document was opened.
+    did-open: func(uri: string, language-id: string, version: u32, text: string);
+
+    /// Notify that a document was changed.
+    did-change: func(uri: string, version: u32, text: string);
+
+    /// Notify that a document was saved.
+    did-save: func(uri: string);
+
+    /// Notify that a document was closed.
+    did-close: func(uri: string);
+}

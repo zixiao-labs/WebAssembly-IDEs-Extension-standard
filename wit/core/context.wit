@@ -1,0 +1,63 @@
+/// Core Context Interface
+///
+/// Provides extension context and metadata. This interface is
+/// always available and does not require permissions.
+
+package ide-extension:core@0.1.0;
+
+/// Semantic version representation
+record version {
+    major: u32,
+    minor: u32,
+    patch: u32,
+    prerelease: option<string>,
+}
+
+/// Extension metadata
+record extension-info {
+    /// Unique extension identifier (e.g., "publisher.extension-name")
+    id: string,
+    /// Display name
+    name: string,
+    /// Extension version
+    version: version,
+    /// Publisher name
+    publisher: string,
+}
+
+/// IDE host information
+record host-info {
+    /// IDE name (e.g., "Logos", "VS Code", "JetBrains")
+    name: string,
+    /// IDE version
+    version: version,
+    /// Standard version implemented by the host
+    standard-version: version,
+}
+
+/// Extension context interface.
+interface context {
+    /// Get information about this extension.
+    get-extension-info: func() -> extension-info;
+
+    /// Get information about the host IDE.
+    get-host-info: func() -> host-info;
+
+    /// Get the path to the extension's installation directory.
+    /// This directory is read-only.
+    get-extension-path: func() -> string;
+
+    /// Get the path to the extension's storage directory.
+    /// This directory is writable if storage permission is granted.
+    get-storage-path: func() -> option<string>;
+
+    /// Get the path to the extension's global storage directory.
+    /// Shared across all workspaces.
+    get-global-storage-path: func() -> option<string>;
+
+    /// Check if a permission is granted.
+    has-permission: func(permission: string) -> bool;
+
+    /// Get all granted permissions.
+    get-permissions: func() -> list<string>;
+}

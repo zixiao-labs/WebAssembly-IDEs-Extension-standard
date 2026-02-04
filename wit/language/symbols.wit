@@ -1,0 +1,97 @@
+/// Language Symbols Interface
+///
+/// Provides document and workspace symbol information.
+/// Requires permission: language:symbols
+
+package ide-extension:language@0.1.0;
+
+use ide-extension:editor/text@0.1.0.{range};
+use definition.{location};
+
+/// Symbol kind
+enum symbol-kind {
+    file,
+    module,
+    namespace,
+    package,
+    class,
+    method,
+    property,
+    field,
+    constructor,
+    enum,
+    interface,
+    function,
+    variable,
+    constant,
+    string,
+    number,
+    boolean,
+    array,
+    object,
+    key,
+    null,
+    enum-member,
+    struct,
+    event,
+    operator,
+    type-parameter,
+}
+
+/// Symbol tag
+enum symbol-tag {
+    deprecated,
+}
+
+/// Document symbol (hierarchical)
+record document-symbol {
+    /// Symbol name
+    name: string,
+    /// More detail (e.g., signature)
+    detail: option<string>,
+    /// Symbol kind
+    kind: symbol-kind,
+    /// Tags (e.g., deprecated)
+    tags: list<symbol-tag>,
+    /// Full range of the symbol
+    range: range,
+    /// Range of the symbol's name
+    selection-range: range,
+    /// Child symbols
+    children: list<document-symbol>,
+}
+
+/// Workspace symbol (flat)
+record workspace-symbol {
+    /// Symbol name
+    name: string,
+    /// Symbol kind
+    kind: symbol-kind,
+    /// Tags
+    tags: list<symbol-tag>,
+    /// Container name (e.g., class name for methods)
+    container-name: option<string>,
+    /// Symbol location
+    location: location,
+}
+
+/// Symbols provider interface.
+interface symbols {
+    /// Register a document symbol provider.
+    register-document-symbol-provider: func(language-ids: list<string>) -> result<_, string>;
+
+    /// Register a workspace symbol provider.
+    register-workspace-symbol-provider: func() -> result<_, string>;
+
+    /// Unregister symbol providers.
+    unregister-providers: func() -> result<_, string>;
+}
+
+/// Symbols handler that extensions export.
+interface symbols-handler {
+    /// Provide document symbols.
+    provide-document-symbols: func(uri: string) -> list<document-symbol>;
+
+    /// Provide workspace symbols matching a query.
+    provide-workspace-symbols: func(query: string) -> list<workspace-symbol>;
+}

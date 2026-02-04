@@ -1,0 +1,33 @@
+/// Core Extension Interface
+///
+/// This is the interface that extensions must export.
+/// It defines the entry points that the host calls.
+
+package ide-extension:core@0.1.0;
+
+/// Activation event that triggered the extension
+variant activation-event {
+    /// Activated on IDE startup (if configured)
+    startup,
+    /// Activated when a file with matching language is opened
+    language(string),
+    /// Activated when a file matching the pattern is opened
+    file-pattern(string),
+    /// Activated when a specific command is invoked
+    command(string),
+    /// Activated when workspace contains a specific file
+    workspace-contains(string),
+    /// Activated by another extension
+    api,
+}
+
+/// The main extension interface that extensions must export.
+interface extension {
+    /// Called when the extension is activated.
+    /// Returns an error message if activation fails.
+    activate: func(event: activation-event) -> result<_, string>;
+
+    /// Called when the extension is deactivated.
+    /// Extensions should clean up resources here.
+    deactivate: func();
+}

@@ -1,0 +1,57 @@
+/// Core Storage Interface
+///
+/// Provides key-value storage for extensions.
+/// Requires permission: storage:local or storage:global
+
+package ide-extension:core@0.1.0;
+
+/// Storage scope
+enum storage-scope {
+    /// Workspace-specific storage
+    workspace,
+    /// Global storage (shared across workspaces)
+    global,
+}
+
+/// Storage value types
+variant storage-value {
+    string-val(string),
+    number-val(float64),
+    bool-val(bool),
+    bytes-val(list<u8>),
+    json-val(string),  // JSON-encoded value
+}
+
+/// Key-value storage interface.
+interface storage {
+    /// Get a value from storage.
+    get: func(scope: storage-scope, key: string) -> option<storage-value>;
+
+    /// Set a value in storage.
+    set: func(scope: storage-scope, key: string, value: storage-value) -> result<_, string>;
+
+    /// Delete a value from storage.
+    delete: func(scope: storage-scope, key: string) -> result<bool, string>;
+
+    /// Check if a key exists in storage.
+    has: func(scope: storage-scope, key: string) -> bool;
+
+    /// Get all keys in storage.
+    keys: func(scope: storage-scope) -> list<string>;
+
+    /// Clear all values in storage.
+    clear: func(scope: storage-scope) -> result<_, string>;
+}
+
+/// Secret storage interface for sensitive data.
+/// Requires permission: storage:secrets
+interface secret-storage {
+    /// Get a secret value.
+    get-secret: func(key: string) -> option<string>;
+
+    /// Store a secret value.
+    set-secret: func(key: string, value: string) -> result<_, string>;
+
+    /// Delete a secret value.
+    delete-secret: func(key: string) -> result<bool, string>;
+}

@@ -1,0 +1,35 @@
+{
+  "name": "hello-world",
+  "displayName": "Hello World",
+  "description": "A minimal example extension demonstrating the IDE Extension Standard",
+  "version": "1.0.0",
+  "publisher": "example",
+  "license": "MIT",
+  "runtime": "wasm32-wasi",
+  "main": "hello_world.wasm",
+  "standardVersion": "0.1.0",
+  "categories": ["Other"],
+  "activationEvents": [
+    "onCommand:helloWorld.sayHello"
+  ],
+  "permissions": [
+    "ui:notifications",
+    "ui:commands"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "id": "helloWorld.sayHello",
+        "title": "Say Hello",
+        "category": "Hello World"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "helloWorld.sayHello",
+        "key": "ctrl+shift+h",
+        "mac": "cmd+shift+h"
+      }
+    ]
+  }
+}

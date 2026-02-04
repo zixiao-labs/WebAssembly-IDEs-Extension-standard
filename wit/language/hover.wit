@@ -1,0 +1,39 @@
+/// Language Hover Interface
+///
+/// Provides hover information.
+/// Requires permission: language:hover
+
+package ide-extension:language@0.1.0;
+
+use ide-extension:editor/text@0.1.0.{position, range};
+
+/// Markdown content
+record markdown-string {
+    /// The markdown content
+    value: string,
+    /// Whether the markdown is trusted (allows command links, etc.)
+    is-trusted: bool,
+}
+
+/// Hover content
+record hover {
+    /// Contents to display (markdown strings)
+    contents: list<markdown-string>,
+    /// Optional range to highlight
+    range: option<range>,
+}
+
+/// Hover provider interface.
+interface hover-provider {
+    /// Register a hover provider for specific languages.
+    register-hover-provider: func(language-ids: list<string>) -> result<_, string>;
+
+    /// Unregister the hover provider.
+    unregister-hover-provider: func() -> result<_, string>;
+}
+
+/// Hover handler that extensions export.
+interface hover-handler {
+    /// Provide hover information at a position.
+    provide-hover: func(uri: string, position: position) -> option<hover>;
+}

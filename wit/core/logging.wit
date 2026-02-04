@@ -1,0 +1,39 @@
+/// Core Logging Interface
+///
+/// Provides logging capabilities for extensions. This interface is
+/// always available and does not require permissions.
+
+package ide-extension:core@0.1.0;
+
+/// Log level enumeration
+enum log-level {
+    trace,
+    debug,
+    info,
+    warn,
+    error,
+}
+
+/// Logging interface for extensions.
+interface logging {
+    /// Log a message at the specified level.
+    log: func(level: log-level, message: string);
+
+    /// Convenience function for trace-level logging.
+    trace: func(message: string);
+
+    /// Convenience function for debug-level logging.
+    debug: func(message: string);
+
+    /// Convenience function for info-level logging.
+    info: func(message: string);
+
+    /// Convenience function for warning-level logging.
+    warn: func(message: string);
+
+    /// Convenience function for error-level logging.
+    error: func(message: string);
+
+    /// Get the current log level filter.
+    get-level: func() -> log-level;
+}

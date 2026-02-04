@@ -1,0 +1,68 @@
+/// Language Diagnostics Interface
+///
+/// Provides diagnostic (error/warning) reporting.
+/// Requires permission: language:diagnostics
+
+package ide-extension:language@0.1.0;
+
+use ide-extension:editor/text@0.1.0.{range};
+
+/// Diagnostic severity
+enum diagnostic-severity {
+    error,
+    warning,
+    information,
+    hint,
+}
+
+/// Diagnostic tag
+enum diagnostic-tag {
+    /// Indicates unnecessary or deprecated code
+    unnecessary,
+    /// Indicates deprecated code
+    deprecated,
+}
+
+/// Related diagnostic information
+record diagnostic-related-info {
+    /// Location URI
+    uri: string,
+    /// Range in the document
+    range: range,
+    /// Message
+    message: string,
+}
+
+/// A diagnostic message
+record diagnostic {
+    /// Range in the document
+    range: range,
+    /// Diagnostic message
+    message: string,
+    /// Severity level
+    severity: diagnostic-severity,
+    /// Diagnostic code
+    code: option<string>,
+    /// Source of the diagnostic (e.g., "typescript", "eslint")
+    source: option<string>,
+    /// Tags for additional classification
+    tags: list<diagnostic-tag>,
+    /// Related information
+    related-information: list<diagnostic-related-info>,
+}
+
+/// Diagnostics interface.
+interface diagnostics {
+    /// Set diagnostics for a document.
+    /// This replaces any existing diagnostics from this extension.
+    set-diagnostics: func(uri: string, diagnostics: list<diagnostic>) -> result<_, string>;
+
+    /// Clear diagnostics for a document.
+    clear-diagnostics: func(uri: string) -> result<_, string>;
+
+    /// Clear all diagnostics from this extension.
+    clear-all-diagnostics: func() -> result<_, string>;
+
+    /// Get diagnostics for a document (from all sources).
+    get-diagnostics: func(uri: string) -> list<diagnostic>;
+}

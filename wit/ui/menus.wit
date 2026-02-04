@@ -1,0 +1,51 @@
+/// UI Menus Interface
+///
+/// Provides menu contribution capabilities.
+/// Requires permission: ui:menus
+
+package ide-extension:ui@0.1.0;
+
+/// Menu location identifiers
+enum menu-location {
+    /// Editor context menu
+    editor-context,
+    /// Editor title menu
+    editor-title,
+    /// Explorer context menu
+    explorer-context,
+    /// Command palette
+    command-palette,
+    /// Status bar
+    status-bar,
+    /// View title menu
+    view-title,
+    /// Main menu bar (if supported)
+    menubar,
+}
+
+/// Menu item visibility condition
+record when-clause {
+    /// Condition expression (e.g., "editorLangId == 'typescript'")
+    expression: string,
+}
+
+/// Menu item definition
+record menu-item {
+    /// Command to execute when clicked
+    command-id: string,
+    /// Group for ordering (e.g., "1_edit", "2_navigation")
+    group: option<string>,
+    /// Visibility condition
+    when: option<when-clause>,
+    /// Display order within group
+    order: option<u32>,
+}
+
+/// Menus interface.
+interface menus {
+    /// Add a menu item to a menu location.
+    add-menu-item: func(location: menu-location, item: menu-item) -> result<_, string>;
+
+    /// Remove a menu item.
+    remove-menu-item: func(location: menu-location, command-id: string) -> result<_, string>;
+}

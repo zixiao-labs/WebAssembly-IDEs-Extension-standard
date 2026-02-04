@@ -1,0 +1,50 @@
+/// UI Commands Interface
+///
+/// Provides command registration and execution.
+/// Requires permission: ui:commands
+
+package ide-extension:ui@0.1.0;
+
+/// Command argument types
+variant command-arg {
+    string-val(string),
+    number-val(float64),
+    bool-val(bool),
+    null-val,
+    json-val(string),  // JSON-encoded complex value
+}
+
+/// Command definition
+record command-definition {
+    /// Unique command identifier (e.g., "myExtension.myCommand")
+    id: string,
+    /// Display title
+    title: string,
+    /// Category for grouping
+    category: option<string>,
+    /// Icon identifier
+    icon: option<string>,
+}
+
+/// Commands interface.
+interface commands {
+    /// Register a command.
+    /// The extension's command handler will be called when the command is executed.
+    register-command: func(command: command-definition) -> result<_, string>;
+
+    /// Unregister a command.
+    unregister-command: func(command-id: string) -> result<_, string>;
+
+    /// Execute a command (including built-in IDE commands).
+    execute-command: func(command-id: string, args: list<command-arg>) -> result<option<command-arg>, string>;
+
+    /// Get all registered commands.
+    get-commands: func() -> list<string>;
+}
+
+/// Command handler interface that extensions export.
+interface command-handler {
+    /// Handle a command execution.
+    /// Returns the result of the command, or an error message.
+    handle-command: func(command-id: string, args: list<command-arg>) -> result<option<command-arg>, string>;
+}

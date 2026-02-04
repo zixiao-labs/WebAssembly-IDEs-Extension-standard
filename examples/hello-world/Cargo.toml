@@ -1,0 +1,17 @@
+[package]
+name = "hello-world"
+version = "1.0.0"
+edition = "2021"
+description = "Hello World extension for IDE Extension Standard"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# The IDE extension bindings would be generated from WIT files
+# ide-extension = "0.1"
+
+[profile.release]
+opt-level = "s"
+lto = true

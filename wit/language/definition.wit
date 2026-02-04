@@ -1,0 +1,83 @@
+/// Language Definition Interface
+///
+/// Provides go-to-definition and related navigation.
+/// Requires permission: language:definition
+
+package ide-extension:language@0.1.0;
+
+use ide-extension:editor/text@0.1.0.{position, range};
+
+/// A location in a document
+record location {
+    /// Document URI
+    uri: string,
+    /// Range in the document
+    range: range,
+}
+
+/// A location link with origin information
+record location-link {
+    /// Origin selection range (highlighted in editor)
+    origin-selection-range: option<range>,
+    /// Target URI
+    target-uri: string,
+    /// Target range (what to reveal)
+    target-range: range,
+    /// Target selection range (what to select)
+    target-selection-range: option<range>,
+}
+
+/// Definition result (either locations or location links)
+variant definition-result {
+    locations(list<location>),
+    location-links(list<location-link>),
+}
+
+/// Definition provider interface.
+interface definition {
+    /// Register a definition provider for specific languages.
+    register-definition-provider: func(language-ids: list<string>) -> result<_, string>;
+
+    /// Register a type definition provider.
+    register-type-definition-provider: func(language-ids: list<string>) -> result<_, string>;
+
+    /// Register an implementation provider.
+    register-implementation-provider: func(language-ids: list<string>) -> result<_, string>;
+
+    /// Register a declaration provider.
+    register-declaration-provider: func(language-ids: list<string>) -> result<_, string>;
+
+    /// Register a reference provider.
+    register-reference-provider: func(language-ids: list<string>) -> result<_, string>;
+
+    /// Unregister all navigation providers.
+    unregister-providers: func() -> result<_, string>;
+}
+
+/// Reference context
+record reference-context {
+    /// Include the declaration of the symbol
+    include-declaration: bool,
+}
+
+/// Definition handler that extensions export.
+interface definition-handler {
+    /// Provide definition locations.
+    provide-definition: func(uri: string, position: position) -> option<definition-result>;
+
+    /// Provide type definition locations.
+    provide-type-definition: func(uri: string, position: position) -> option<definition-result>;
+
+    /// Provide implementation locations.
+    provide-implementation: func(uri: string, position: position) -> option<definition-result>;
+
+    /// Provide declaration locations.
+    provide-declaration: func(uri: string, position: position) -> option<definition-result>;
+
+    /// Provide reference locations.
+    provide-references: func(
+        uri: string,
+        position: position,
+        context: reference-context
+    ) -> list<location>;
+}

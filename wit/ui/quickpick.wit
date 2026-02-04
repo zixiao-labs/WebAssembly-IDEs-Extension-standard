@@ -1,0 +1,68 @@
+/// UI QuickPick Interface
+///
+/// Provides quick pick (searchable list) UI.
+/// Requires permission: ui:quickpick
+
+package ide-extension:ui@0.1.0;
+
+/// Quick pick item
+record quick-pick-item {
+    /// Display label
+    label: string,
+    /// Optional description (shown after label)
+    description: option<string>,
+    /// Optional detail (shown below label)
+    detail: option<string>,
+    /// Whether this item is picked by default (for multi-select)
+    picked: bool,
+    /// Whether this item should always be shown (not filtered)
+    always-show: bool,
+    /// Custom data to identify this item
+    id: string,
+}
+
+/// Quick pick options
+record quick-pick-options {
+    /// Placeholder text in the input box
+    placeholder: option<string>,
+    /// Title of the quick pick
+    title: option<string>,
+    /// Whether multiple items can be selected
+    can-pick-many: bool,
+    /// Whether to match on description as well as label
+    match-on-description: bool,
+    /// Whether to match on detail as well
+    match-on-detail: bool,
+}
+
+/// Input box options
+record input-box-options {
+    /// Placeholder text
+    placeholder: option<string>,
+    /// Title of the input box
+    title: option<string>,
+    /// Initial value
+    value: option<string>,
+    /// Prompt message
+    prompt: option<string>,
+    /// Whether to mask input (for passwords)
+    password: bool,
+    /// Validation pattern (regex)
+    validation-pattern: option<string>,
+    /// Validation error message
+    validation-message: option<string>,
+}
+
+/// QuickPick interface.
+interface quickpick {
+    /// Show a quick pick list.
+    /// Returns the selected item IDs, or empty if cancelled.
+    show-quick-pick: func(
+        items: list<quick-pick-item>,
+        options: quick-pick-options
+    ) -> result<list<string>, string>;
+
+    /// Show an input box.
+    /// Returns the entered text, or none if cancelled.
+    show-input-box: func(options: input-box-options) -> result<option<string>, string>;
+}

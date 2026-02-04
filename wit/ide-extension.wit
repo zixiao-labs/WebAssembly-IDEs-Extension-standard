@@ -1,0 +1,87 @@
+/// IDE Extension Standard - Main World Definition
+///
+/// This is the entry point for WASM IDE extensions. It defines the world
+/// that extensions target and the interfaces they can use.
+///
+/// Version: 0.1.0 (Draft)
+
+package ide-extension:extension@0.1.0;
+
+/// The main world that extensions implement.
+/// Extensions must export the `extension` interface and may import
+/// various host capabilities based on their declared permissions.
+world extension {
+    // ─────────────────────────────────────────────────────────────────
+    // Core imports (always available)
+    // ─────────────────────────────────────────────────────────────────
+    import ide-extension:core/lifecycle@0.1.0;
+    import ide-extension:core/logging@0.1.0;
+    import ide-extension:core/context@0.1.0;
+
+    // ─────────────────────────────────────────────────────────────────
+    // Optional imports (require permissions)
+    // ─────────────────────────────────────────────────────────────────
+
+    // Requires: storage:*
+    import ide-extension:core/storage@0.1.0;
+
+    // Requires: editor:*
+    import ide-extension:editor/text@0.1.0;
+    import ide-extension:editor/selection@0.1.0;
+    import ide-extension:editor/decorations@0.1.0;
+
+    // Requires: workspace:*
+    import ide-extension:workspace/filesystem@0.1.0;
+    import ide-extension:workspace/project@0.1.0;
+
+    // Requires: ui:*
+    import ide-extension:ui/notifications@0.1.0;
+    import ide-extension:ui/commands@0.1.0;
+    import ide-extension:ui/menus@0.1.0;
+    import ide-extension:ui/quickpick@0.1.0;
+    import ide-extension:ui/webview@0.1.0;
+
+    // Requires: language:*
+    import ide-extension:language/completion@0.1.0;
+    import ide-extension:language/diagnostics@0.1.0;
+    import ide-extension:language/hover@0.1.0;
+    import ide-extension:language/definition@0.1.0;
+    import ide-extension:language/symbols@0.1.0;
+
+    // Requires: network:*
+    import ide-extension:network/fetch@0.1.0;
+    import ide-extension:network/websocket@0.1.0;
+
+    // ─────────────────────────────────────────────────────────────────
+    // Extension exports (required)
+    // ─────────────────────────────────────────────────────────────────
+    export ide-extension:core/extension@0.1.0;
+}
+
+/// Minimal world for extensions that only need basic functionality.
+/// Use this for simple extensions that don't require any optional APIs.
+world extension-minimal {
+    import ide-extension:core/lifecycle@0.1.0;
+    import ide-extension:core/logging@0.1.0;
+    import ide-extension:core/context@0.1.0;
+
+    export ide-extension:core/extension@0.1.0;
+}
+
+/// World for language server extensions.
+/// Includes all language-related interfaces.
+world language-server {
+    import ide-extension:core/lifecycle@0.1.0;
+    import ide-extension:core/logging@0.1.0;
+    import ide-extension:core/context@0.1.0;
+    import ide-extension:workspace/filesystem@0.1.0;
+
+    import ide-extension:language/completion@0.1.0;
+    import ide-extension:language/diagnostics@0.1.0;
+    import ide-extension:language/hover@0.1.0;
+    import ide-extension:language/definition@0.1.0;
+    import ide-extension:language/symbols@0.1.0;
+
+    export ide-extension:core/extension@0.1.0;
+    export ide-extension:language/language-server@0.1.0;
+}

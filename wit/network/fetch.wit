@@ -1,0 +1,64 @@
+/// Network Fetch Interface
+///
+/// Provides HTTP fetch capabilities.
+/// Requires permission: network:fetch or network:fetch:<domain>
+
+package ide-extension:network@0.1.0;
+
+/// HTTP method
+enum http-method {
+    get,
+    post,
+    put,
+    delete,
+    patch,
+    head,
+    options,
+}
+
+/// HTTP header
+record http-header {
+    name: string,
+    value: string,
+}
+
+/// HTTP request options
+record request-options {
+    /// HTTP method
+    method: http-method,
+    /// Request headers
+    headers: list<http-header>,
+    /// Request body (for POST, PUT, PATCH)
+    body: option<list<u8>>,
+    /// Request timeout in milliseconds
+    timeout-ms: option<u32>,
+    /// Whether to follow redirects
+    follow-redirects: bool,
+}
+
+/// HTTP response
+record http-response {
+    /// HTTP status code
+    status: u16,
+    /// Status text
+    status-text: string,
+    /// Response headers
+    headers: list<http-header>,
+    /// Response body
+    body: list<u8>,
+    /// Final URL (after redirects)
+    url: string,
+}
+
+/// Fetch interface.
+interface fetch {
+    /// Perform an HTTP request.
+    /// The URL must match the domain pattern in the granted permission.
+    fetch: func(url: string, options: request-options) -> result<http-response, string>;
+
+    /// Convenience function for GET requests.
+    get: func(url: string, headers: list<http-header>) -> result<http-response, string>;
+
+    /// Convenience function for POST requests with JSON body.
+    post-json: func(url: string, headers: list<http-header>, json-body: string) -> result<http-response, string>;
+}

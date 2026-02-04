@@ -1,0 +1,122 @@
+/// Language Completion Interface
+///
+/// Provides code completion capabilities.
+/// Requires permission: language:completion
+
+package ide-extension:language@0.1.0;
+
+use ide-extension:editor/text@0.1.0.{position, range, text-edit};
+
+/// Completion item kind
+enum completion-item-kind {
+    text,
+    method,
+    function,
+    constructor,
+    field,
+    variable,
+    class,
+    interface,
+    module,
+    property,
+    unit,
+    value,
+    enum,
+    keyword,
+    snippet,
+    color,
+    file,
+    reference,
+    folder,
+    enum-member,
+    constant,
+    struct,
+    event,
+    operator,
+    type-parameter,
+}
+
+/// Insert text format
+enum insert-text-format {
+    /// Plain text
+    plain-text,
+    /// Snippet with tab stops and placeholders
+    snippet,
+}
+
+/// Completion item
+record completion-item {
+    /// Display label
+    label: string,
+    /// Kind of completion item
+    kind: completion-item-kind,
+    /// Detail information (shown after label)
+    detail: option<string>,
+    /// Documentation (markdown supported)
+    documentation: option<string>,
+    /// Sort text (for ordering)
+    sort-text: option<string>,
+    /// Filter text (for matching)
+    filter-text: option<string>,
+    /// Text to insert when selected
+    insert-text: option<string>,
+    /// Insert text format
+    insert-text-format: insert-text-format,
+    /// Additional text edits to apply
+    additional-text-edits: list<text-edit>,
+    /// Command to execute after insertion
+    command-id: option<string>,
+    /// Custom data for resolve
+    data: option<string>,
+}
+
+/// Completion trigger kind
+enum completion-trigger-kind {
+    /// Manually invoked (Ctrl+Space)
+    invoked,
+    /// Triggered by a trigger character
+    trigger-character,
+    /// Re-triggered while completions are active
+    trigger-for-incomplete,
+}
+
+/// Completion context
+record completion-context {
+    /// How completion was triggered
+    trigger-kind: completion-trigger-kind,
+    /// Character that triggered completion (if trigger-character)
+    trigger-character: option<string>,
+}
+
+/// Completion list
+record completion-list {
+    /// Whether this list is incomplete (more items may be available)
+    is-incomplete: bool,
+    /// Completion items
+    items: list<completion-item>,
+}
+
+/// Completion provider interface.
+interface completion {
+    /// Register a completion provider for specific languages.
+    register-completion-provider: func(
+        language-ids: list<string>,
+        trigger-characters: list<string>
+    ) -> result<_, string>;
+
+    /// Unregister the completion provider.
+    unregister-completion-provider: func() -> result<_, string>;
+}
+
+/// Completion handler that extensions export.
+interface completion-handler {
+    /// Provide completions at a position.
+    provide-completions: func(
+        uri: string,
+        position: position,
+        context: completion-context
+    ) -> option<completion-list>;
+
+    /// Resolve additional details for a completion item.
+    resolve-completion-item: func(item: completion-item) -> completion-item;
+}
