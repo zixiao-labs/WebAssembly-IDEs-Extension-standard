@@ -80,6 +80,13 @@
         "type": "string"
       }
     },
+    "conformanceLevel": {
+      "type": "integer",
+      "description": "Minimum conformance level required from host IDE (0=Minimal, 1=Basic, 2=Editor, 3=Workspace, 4=Language, 5=Full)",
+      "minimum": 0,
+      "maximum": 5,
+      "default": 0
+    },
     "categories": {
       "type": "array",
       "description": "Extension categories",

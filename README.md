@@ -28,7 +28,8 @@ This standard defines a common interface for IDE extensions compiled to WebAssem
 │       ├── manifest.md      # Manifest format specification
 │       ├── permissions.md   # Permission model specification
 │       ├── runtime.md       # Runtime requirements
-│       └── security.md      # Security model
+│       ├── security.md      # Security model
+│       └── conformance.md   # Conformance levels and testing
 ├── wit/                     # WIT interface definitions
 │   ├── ide-extension.wit    # Main world definition
 │   ├── core/                # Core interfaces
@@ -42,6 +43,21 @@ This standard defines a common interface for IDE extensions compiled to WebAssem
 └── examples/                # Example extensions
     └── hello-world/         # Minimal example
 ```
+
+## Conformance Levels
+
+IDEs can implement subsets of the standard progressively:
+
+| Level | Name | Key Capabilities |
+|-------|------|------------------|
+| 0 | Minimal | Lifecycle, logging only |
+| 1 | Basic | + Commands, notifications, storage |
+| 2 | Editor | + Text editing, decorations |
+| 3 | Workspace | + File system, project structure |
+| 4 | Language | + Completions, diagnostics, navigation |
+| 5 | Full | + Network, webviews, secrets |
+
+See [spec/0.1/conformance.md](spec/0.1/conformance.md) for detailed requirements and testing procedures.
 
 ## Quick Start
 
