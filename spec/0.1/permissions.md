@@ -92,11 +92,34 @@ Requires permission:
 | `network:fetch:<pattern>` | HTTP to specific domains |
 | `network:websocket` | WebSocket connections (any) |
 | `network:websocket:<pattern>` | WebSocket to specific hosts |
+| `network:realtime` | Realtime pub/sub connections |
+| `network:realtime:<pattern>` | Realtime to specific servers |
 
 Domain patterns support:
 - Exact match: `api.github.com`
 - Subdomain wildcard: `*.github.com`
 - Any domain: `*` (requires `network:fetch` or `network:websocket`)
+
+### Core Events Permission
+
+| Permission | Description |
+|------------|-------------|
+| `core:events` | Subscribe to IDE events (file changes, configuration, theme) |
+
+This is a low-risk permission typically auto-granted as it only allows reading event notifications.
+
+### Collaboration Permissions (Optional Capability)
+
+Collaboration permissions enable real-time collaborative editing features. These are part of the **collaboration** optional capability and require explicit user consent.
+
+| Permission | Description |
+|------------|-------------|
+| `collaboration:session` | Create, join, and manage collaboration sessions |
+| `collaboration:crdt` | Access CRDT document operations for conflict-free editing |
+| `collaboration:awareness` | Share and receive cursor positions and presence info |
+| `collaboration:*` | All collaboration permissions |
+
+**Note:** Collaboration is an optional capability, not part of the standard conformance levels. IDEs may or may not implement these interfaces.
 
 ## Permission Escalation
 
@@ -118,6 +141,8 @@ Common permission sets can be referenced by name:
 | `bundle:language-server` | `workspace:read`, `language:*` |
 | `bundle:formatter` | `editor:read`, `editor:write` |
 | `bundle:linter` | `workspace:read`, `language:diagnostics` |
+| `bundle:collaboration` | `collaboration:*`, `network:realtime`, `core:events` |
+| `bundle:ai-assistant` | `editor:read`, `editor:write`, `network:fetch`, `ui:*` |
 
 ## Risk Levels
 
@@ -128,22 +153,28 @@ Permissions are categorized by risk:
 - `ui:commands`
 - `language:hover`
 - `language:completion`
+- `core:events`
 
 ### Medium Risk (User Prompt)
 - `workspace:read`
 - `editor:read`
 - `editor:write`
 - `storage:*`
+- `collaboration:awareness`
 
 ### High Risk (Explicit Warning)
 - `workspace:write`
 - `network:fetch`
 - `network:websocket`
 - `ui:webview`
+- `collaboration:session`
+- `collaboration:crdt`
 
 ### Dangerous (Strong Warning)
 - `network:fetch:*` (any domain)
+- `network:realtime` (persistent connections)
 - Combined `network` + `workspace:write`
+- Combined `collaboration:*` + `network:*`
 
 ## User Interface Guidelines
 

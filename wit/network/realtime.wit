@@ -1,0 +1,299 @@
+/// Network Realtime Interface
+///
+/// Provides real-time communication capabilities for pub/sub messaging,
+/// presence channels, and event broadcasting. This is a higher-level
+/// abstraction over WebSockets for common real-time patterns.
+///
+/// Requires permission: network:realtime (dangerous - enables network connections)
+
+package ide-extension:network@0.1.0;
+
+/// Handle for a realtime connection
+type realtime-handle = u32;
+
+/// Handle for a channel subscription
+type channel-handle = u32;
+
+/// Connection status
+enum connection-status {
+    /// Attempting to connect
+    connecting,
+    /// Connected and ready
+    connected,
+    /// Connection lost, attempting to reconnect
+    reconnecting,
+    /// Disconnected (intentional or permanent failure)
+    disconnected,
+    /// Connection failed
+    failed,
+}
+
+/// Channel type
+enum channel-type {
+    /// Standard pub/sub channel
+    pubsub,
+    /// Presence channel (tracks who is subscribed)
+    presence,
+    /// Private channel (requires authorization)
+    private,
+}
+
+/// Message payload
+variant message-payload {
+    /// Text message
+    text(string),
+    /// Binary message
+    binary(list<u8>),
+    /// JSON message (text that should be parsed as JSON)
+    json(string),
+}
+
+/// Realtime message
+record realtime-message {
+    /// Channel the message was sent on
+    channel: string,
+    /// Event name/type
+    event: string,
+    /// Message payload
+    payload: message-payload,
+    /// Sender ID (if available)
+    sender-id: option<string>,
+    /// Message timestamp (Unix ms)
+    timestamp: u64,
+    /// Message ID for deduplication
+    message-id: option<string>,
+}
+
+/// Presence information for a channel member
+record presence-member {
+    /// User/client identifier
+    id: string,
+    /// User info (JSON-encoded)
+    info: string,
+    /// When they joined (Unix ms)
+    joined-at: u64,
+}
+
+/// Presence event
+record presence-event {
+    /// Channel name
+    channel: string,
+    /// Event type
+    event-type: presence-event-type,
+    /// Affected member
+    member: presence-member,
+}
+
+/// Types of presence events
+enum presence-event-type {
+    /// Member joined the channel
+    join,
+    /// Member left the channel
+    leave,
+    /// Member's info was updated
+    update,
+}
+
+/// Connection options
+record connect-options {
+    /// Server URL (wss:// or ws://)
+    url: string,
+    /// Authentication token (optional)
+    auth-token: option<string>,
+    /// Custom headers (JSON-encoded object)
+    headers: option<string>,
+    /// Reconnect automatically on disconnect
+    auto-reconnect: bool,
+    /// Maximum reconnection attempts (0 = unlimited)
+    max-reconnect-attempts: u32,
+    /// Reconnection delay in milliseconds
+    reconnect-delay-ms: u32,
+}
+
+/// Channel subscription options
+record subscribe-options {
+    /// Channel name
+    channel: string,
+    /// Channel type
+    channel-type: channel-type,
+    /// For presence channels: initial user info (JSON)
+    presence-info: option<string>,
+    /// Authorization data for private channels (JSON)
+    auth-data: option<string>,
+}
+
+/// Status change event
+record status-change {
+    /// New connection status
+    status: connection-status,
+    /// Error message (if failed)
+    error: option<string>,
+    /// Reconnection attempt number (if reconnecting)
+    attempt: option<u32>,
+}
+
+/// Realtime communication interface.
+interface realtime {
+    /// Connect to a realtime server.
+    ///
+    /// # Arguments
+    /// * `options` - Connection options
+    ///
+    /// # Returns
+    /// * `Ok(handle)` - Connection handle
+    /// * `Err(message)` - If connection failed
+    connect: func(options: connect-options) -> result<realtime-handle, string>;
+
+    /// Disconnect from the server.
+    ///
+    /// # Arguments
+    /// * `handle` - Connection handle
+    ///
+    /// # Returns
+    /// * `Ok(_)` - Disconnected
+    /// * `Err(message)` - If handle was invalid
+    disconnect: func(handle: realtime-handle) -> result<_, string>;
+
+    /// Get the current connection status.
+    ///
+    /// # Arguments
+    /// * `handle` - Connection handle
+    ///
+    /// # Returns
+    /// * Current connection status
+    get-status: func(handle: realtime-handle) -> connection-status;
+
+    /// Subscribe to a channel.
+    ///
+    /// # Arguments
+    /// * `handle` - Connection handle
+    /// * `options` - Subscription options
+    ///
+    /// # Returns
+    /// * `Ok(channel-handle)` - Channel subscription handle
+    /// * `Err(message)` - If subscription failed
+    subscribe-channel: func(
+        handle: realtime-handle,
+        options: subscribe-options
+    ) -> result<channel-handle, string>;
+
+    /// Unsubscribe from a channel.
+    ///
+    /// # Arguments
+    /// * `channel-handle` - Channel subscription handle
+    ///
+    /// # Returns
+    /// * `Ok(_)` - Unsubscribed
+    /// * `Err(message)` - If handle was invalid
+    unsubscribe-channel: func(channel-handle: channel-handle) -> result<_, string>;
+
+    /// Send a message to a channel.
+    ///
+    /// # Arguments
+    /// * `handle` - Connection handle
+    /// * `channel` - Channel name
+    /// * `event` - Event name
+    /// * `payload` - Message payload
+    ///
+    /// # Returns
+    /// * `Ok(_)` - Message sent
+    /// * `Err(message)` - If send failed
+    send: func(
+        handle: realtime-handle,
+        channel: string,
+        event: string,
+        payload: message-payload
+    ) -> result<_, string>;
+
+    /// Broadcast a message to multiple channels.
+    ///
+    /// # Arguments
+    /// * `handle` - Connection handle
+    /// * `channels` - List of channel names
+    /// * `event` - Event name
+    /// * `payload` - Message payload
+    ///
+    /// # Returns
+    /// * `Ok(_)` - Message broadcast
+    /// * `Err(message)` - If broadcast failed
+    broadcast: func(
+        handle: realtime-handle,
+        channels: list<string>,
+        event: string,
+        payload: message-payload
+    ) -> result<_, string>;
+
+    /// Get presence members for a channel.
+    /// Only works for presence channels.
+    ///
+    /// # Arguments
+    /// * `channel-handle` - Channel subscription handle
+    ///
+    /// # Returns
+    /// * `Ok(members)` - List of presence members
+    /// * `Err(message)` - If not a presence channel
+    get-presence-members: func(channel-handle: channel-handle) -> result<list<presence-member>, string>;
+
+    /// Update presence info for a channel.
+    /// Only works for presence channels.
+    ///
+    /// # Arguments
+    /// * `channel-handle` - Channel subscription handle
+    /// * `info` - New presence info (JSON)
+    ///
+    /// # Returns
+    /// * `Ok(_)` - Info updated
+    /// * `Err(message)` - If not a presence channel
+    update-presence-info: func(channel-handle: channel-handle, info: string) -> result<_, string>;
+
+    /// Poll for messages (non-blocking).
+    ///
+    /// # Arguments
+    /// * `handle` - Connection handle
+    ///
+    /// # Returns
+    /// * List of messages received since last poll
+    poll-messages: func(handle: realtime-handle) -> list<realtime-message>;
+
+    /// Poll for presence events (non-blocking).
+    ///
+    /// # Arguments
+    /// * `handle` - Connection handle
+    ///
+    /// # Returns
+    /// * List of presence events since last poll
+    poll-presence: func(handle: realtime-handle) -> list<presence-event>;
+
+    /// Poll for status changes (non-blocking).
+    ///
+    /// # Arguments
+    /// * `handle` - Connection handle
+    ///
+    /// # Returns
+    /// * List of status changes since last poll
+    poll-status: func(handle: realtime-handle) -> list<status-change>;
+}
+
+/// Realtime event handler that extensions can export.
+interface realtime-handler {
+    /// Called when a message is received.
+    ///
+    /// # Arguments
+    /// * `handle` - Connection handle
+    /// * `message` - The received message
+    on-message: func(handle: realtime-handle, message: realtime-message);
+
+    /// Called when the connection status changes.
+    ///
+    /// # Arguments
+    /// * `handle` - Connection handle
+    /// * `change` - Status change information
+    on-status-change: func(handle: realtime-handle, change: status-change);
+
+    /// Called when a presence event occurs.
+    ///
+    /// # Arguments
+    /// * `handle` - Connection handle
+    /// * `event` - Presence event
+    on-presence-event: func(handle: realtime-handle, event: presence-event);
+}

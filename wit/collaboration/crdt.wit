@@ -1,0 +1,199 @@
+/// Collaboration CRDT Interface
+///
+/// Provides Conflict-free Replicated Data Type (CRDT) operations for
+/// collaborative document editing. This enables multiple users to edit
+/// the same document simultaneously without conflicts.
+///
+/// Requires permission: collaboration:crdt (high risk)
+
+package ide-extension:collaboration@0.1.0;
+
+/// Handle for a CRDT document
+type doc-handle = u32;
+
+/// Types of CRDT operations
+enum operation-kind {
+    /// Insert text at a position
+    insert,
+    /// Delete a range of text
+    delete,
+    /// Replace a range with new text
+    replace,
+}
+
+/// A single CRDT operation
+record crdt-operation {
+    /// Type of operation
+    kind: operation-kind,
+    /// Position or start of range (character offset)
+    position: u64,
+    /// Length of affected range (for delete/replace)
+    length: u64,
+    /// Content to insert (for insert/replace)
+    content: option<string>,
+    /// Logical timestamp for ordering
+    timestamp: u64,
+    /// Unique identifier of the author
+    author-id: string,
+}
+
+/// CRDT document state
+record doc-state {
+    /// Document handle
+    handle: doc-handle,
+    /// Current document version (vector clock)
+    version: list<u64>,
+    /// Number of pending local operations
+    pending-ops: u32,
+    /// Whether the document is synced with remote
+    is-synced: bool,
+}
+
+/// Options for creating a CRDT document
+record create-doc-options {
+    /// Initial content (empty if joining existing doc)
+    initial-content: option<string>,
+    /// Document identifier for joining existing sessions
+    doc-id: option<string>,
+}
+
+/// CRDT interface for collaborative document operations.
+interface crdt {
+    /// Create a new CRDT document or join an existing one.
+    ///
+    /// # Arguments
+    /// * `options` - Document creation options
+    ///
+    /// # Returns
+    /// * `Ok(handle)` - Document handle
+    /// * `Err(message)` - If creation failed
+    create-doc: func(options: create-doc-options) -> result<doc-handle, string>;
+
+    /// Close a CRDT document and release resources.
+    ///
+    /// # Arguments
+    /// * `handle` - Document handle
+    ///
+    /// # Returns
+    /// * `Ok(_)` - Successfully closed
+    /// * `Err(message)` - If handle was invalid
+    close-doc: func(handle: doc-handle) -> result<_, string>;
+
+    /// Apply a local operation to the document.
+    /// The operation will be propagated to other collaborators.
+    ///
+    /// # Arguments
+    /// * `handle` - Document handle
+    /// * `op` - The operation to apply
+    ///
+    /// # Returns
+    /// * `Ok(_)` - Operation applied successfully
+    /// * `Err(message)` - If operation failed
+    apply-local: func(handle: doc-handle, op: crdt-operation) -> result<_, string>;
+
+    /// Apply a batch of local operations atomically.
+    ///
+    /// # Arguments
+    /// * `handle` - Document handle
+    /// * `ops` - List of operations to apply
+    ///
+    /// # Returns
+    /// * `Ok(_)` - All operations applied
+    /// * `Err(message)` - If any operation failed (none applied)
+    apply-local-batch: func(handle: doc-handle, ops: list<crdt-operation>) -> result<_, string>;
+
+    /// Apply a remote operation received from another collaborator.
+    /// The CRDT algorithm handles conflict resolution.
+    ///
+    /// # Arguments
+    /// * `handle` - Document handle
+    /// * `op` - The remote operation
+    ///
+    /// # Returns
+    /// * `Ok(_)` - Operation integrated successfully
+    /// * `Err(message)` - If operation was invalid
+    apply-remote: func(handle: doc-handle, op: crdt-operation) -> result<_, string>;
+
+    /// Apply a batch of remote operations.
+    ///
+    /// # Arguments
+    /// * `handle` - Document handle
+    /// * `ops` - List of remote operations
+    ///
+    /// # Returns
+    /// * `Ok(_)` - All operations integrated
+    /// * `Err(message)` - If any operation was invalid
+    apply-remote-batch: func(handle: doc-handle, ops: list<crdt-operation>) -> result<_, string>;
+
+    /// Get the current document state.
+    ///
+    /// # Arguments
+    /// * `handle` - Document handle
+    ///
+    /// # Returns
+    /// * `Ok(state)` - Current document state
+    /// * `Err(message)` - If handle was invalid
+    get-state: func(handle: doc-handle) -> result<doc-state, string>;
+
+    /// Get the current document content as plain text.
+    ///
+    /// # Arguments
+    /// * `handle` - Document handle
+    ///
+    /// # Returns
+    /// * `Ok(content)` - Document content
+    /// * `Err(message)` - If handle was invalid
+    get-content: func(handle: doc-handle) -> result<string, string>;
+
+    /// Get a range of content from the document.
+    ///
+    /// # Arguments
+    /// * `handle` - Document handle
+    /// * `start` - Start position (character offset)
+    /// * `end` - End position (character offset)
+    ///
+    /// # Returns
+    /// * `Ok(content)` - Content in range
+    /// * `Err(message)` - If range was invalid
+    get-content-range: func(handle: doc-handle, start: u64, end: u64) -> result<string, string>;
+
+    /// Get pending operations that need to be sent to remote.
+    ///
+    /// # Arguments
+    /// * `handle` - Document handle
+    ///
+    /// # Returns
+    /// * List of pending operations
+    get-pending-ops: func(handle: doc-handle) -> list<crdt-operation>;
+
+    /// Mark operations as acknowledged by remote.
+    ///
+    /// # Arguments
+    /// * `handle` - Document handle
+    /// * `up-to-timestamp` - Acknowledge all ops up to this timestamp
+    ack-ops: func(handle: doc-handle, up-to-timestamp: u64);
+}
+
+/// CRDT event handler that extensions can export.
+interface crdt-handler {
+    /// Called when a local operation should be broadcast to collaborators.
+    ///
+    /// # Arguments
+    /// * `handle` - Document handle
+    /// * `op` - The operation to broadcast
+    on-local-op: func(handle: doc-handle, op: crdt-operation);
+
+    /// Called when the document content changes (from any source).
+    ///
+    /// # Arguments
+    /// * `handle` - Document handle
+    /// * `content` - New document content
+    on-content-change: func(handle: doc-handle, content: string);
+
+    /// Called when the document state changes.
+    ///
+    /// # Arguments
+    /// * `handle` - Document handle
+    /// * `state` - New document state
+    on-state-change: func(handle: doc-handle, state: doc-state);
+}

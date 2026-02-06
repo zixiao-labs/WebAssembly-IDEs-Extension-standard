@@ -101,6 +101,8 @@
           "Formatters",
           "Keymaps",
           "SCM Providers",
+          "Collaboration",
+          "AI",
           "Other"
         ]
       },
@@ -111,7 +113,20 @@
       "description": "Required permissions",
       "items": {
         "type": "string",
-        "pattern": "^(core|storage|editor|workspace|ui|language|network|bundle):[a-z*-]+(:[a-zA-Z0-9.*-]+)?$"
+        "pattern": "^(core|storage|editor|workspace|ui|language|network|collaboration|bundle):[a-z*-]+(:[a-zA-Z0-9.*-]+)?$"
+      },
+      "uniqueItems": true
+    },
+    "optionalCapabilities": {
+      "type": "array",
+      "description": "Optional capabilities that enhance functionality but are not required. Extensions can gracefully degrade if these are unavailable.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "collaboration",
+          "realtime",
+          "ai"
+        ]
       },
       "uniqueItems": true
     },

@@ -72,6 +72,7 @@ All of Level 0, plus:
 | `ui/commands` | `wit/ui/commands.wit` | Command registration and execution |
 | `ui/notifications` | `wit/ui/notifications.wit` | Info, warning, error notifications |
 | `core/storage` | `wit/core/storage.wit` | Key-value persistence |
+| `core/events` | `wit/core/events.wit` | IDE event subscriptions |
 
 #### Required Permissions Support
 
@@ -79,6 +80,7 @@ All of Level 0, plus:
 - `ui:notifications`
 - `storage:local`
 - `storage:global`
+- `core:events`
 
 #### Required Runtime
 
@@ -308,6 +310,7 @@ All of Level 4, plus:
 | `core/lifecycle` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `core/logging` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `core/context` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `core/events` | | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `core/storage` | | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `ui/commands` | | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `ui/notifications` | | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -326,7 +329,121 @@ All of Level 4, plus:
 | `language/language-server` | | | | | ✓ | ✓ |
 | `network/fetch` | | | | | | ✓ |
 | `network/websocket` | | | | | | ✓ |
+| `network/realtime` | | | | | | ✓ |
 | `ui/webview` | | | | | | ✓ |
+
+---
+
+## Optional Capabilities
+
+In addition to the conformance levels, the standard defines **optional capabilities** that IDEs may implement independently of their conformance level. These are specialized feature sets that not every IDE needs.
+
+### Why Optional Capabilities?
+
+Some features are valuable but not universally needed:
+- **Collaboration**: Real-time collaborative editing requires significant infrastructure
+- **Realtime**: Persistent connections for live updates
+- **AI**: Integration with AI/LLM services
+
+By making these optional, IDEs can:
+1. Implement conformance levels without blocking on specialized features
+2. Add optional capabilities based on their target use cases
+3. Allow extensions to gracefully degrade when capabilities are unavailable
+
+### Collaboration Capability
+
+**Status:** Optional (not required for any conformance level)
+
+The collaboration capability enables real-time multi-user editing features:
+
+| Interface | WIT File | Description |
+|-----------|----------|-------------|
+| `collaboration/crdt` | `wit/collaboration/crdt.wit` | Conflict-free document operations |
+| `collaboration/awareness` | `wit/collaboration/awareness.wit` | Cursor/presence synchronization |
+| `collaboration/session` | `wit/collaboration/session.wit` | Session management |
+| `network/realtime` | `wit/network/realtime.wit` | Pub/sub messaging channels |
+
+**Required Permissions:**
+- `collaboration:session` - Create/join sessions
+- `collaboration:crdt` - CRDT document operations
+- `collaboration:awareness` - Presence information
+- `network:realtime` - Realtime connections
+
+**Target World:**
+
+```wit
+world collaboration-extension {
+    import ide-extension:core/lifecycle@0.1.0;
+    import ide-extension:core/logging@0.1.0;
+    import ide-extension:core/context@0.1.0;
+    import ide-extension:core/events@0.1.0;
+    import ide-extension:editor/text@0.1.0;
+    import ide-extension:editor/selection@0.1.0;
+    import ide-extension:network/realtime@0.1.0;
+    import ide-extension:collaboration/crdt@0.1.0;
+    import ide-extension:collaboration/awareness@0.1.0;
+    import ide-extension:collaboration/session@0.1.0;
+    export ide-extension:core/extension@0.1.0;
+}
+```
+
+**Example Extensions:**
+- Live Share / collaborative editing
+- Pair programming tools
+- Real-time code review
+- Teaching/mentoring environments
+
+### Declaring Optional Capabilities
+
+Extensions declare optional capabilities in their manifest:
+
+```json
+{
+  "name": "my-collab-extension",
+  "version": "1.0.0",
+  "runtime": "wasm32-wasi",
+  "main": "extension.wasm",
+  "standardVersion": "0.1.0",
+  "conformanceLevel": 2,
+  "optionalCapabilities": ["collaboration"],
+  "permissions": [
+    "collaboration:session",
+    "collaboration:crdt",
+    "collaboration:awareness",
+    "network:realtime"
+  ]
+}
+```
+
+IDEs report their supported capabilities:
+
+```json
+{
+  "ideExtensionStandard": {
+    "version": "0.1.0",
+    "conformanceLevel": 4,
+    "optionalCapabilities": ["collaboration", "ai"]
+  }
+}
+```
+
+### Graceful Degradation
+
+Extensions using optional capabilities should:
+
+1. **Check availability** at activation:
+```rust
+if !ctx.has_capability("collaboration") {
+    // Fall back to single-user mode
+    return Ok(());
+}
+```
+
+2. **Provide fallback behavior** when capabilities are missing
+
+3. **Document requirements** clearly in extension description
+
+---
 
 ## Declaring Conformance
 
