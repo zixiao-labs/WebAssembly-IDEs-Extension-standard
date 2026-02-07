@@ -106,14 +106,18 @@ IDEs declare which version(s) they implement. Extensions declare the minimum ver
 
 ## Conformance Levels
 
-IDEs can implement subsets of the standard:
+IDEs can implement subsets of the standard. This enables incremental adoption and allows simpler editors to participate in the ecosystem without full implementation.
 
-| Level | Required Interfaces |
-|-------|---------------------|
-| Minimal | core/* |
-| Basic | core/*, ui/notifications, ui/commands |
-| Standard | All above + editor/*, workspace/* |
-| Full | All interfaces |
+| Level | Name | Key Capabilities |
+|-------|------|------------------|
+| 0 | Minimal | Lifecycle, logging only |
+| 1 | Basic | + Commands, notifications, storage |
+| 2 | Editor | + Text editing, decorations |
+| 3 | Workspace | + File system, project structure |
+| 4 | Language | + Completions, diagnostics, navigation |
+| 5 | Full | + Network, webviews, secrets |
+
+See [conformance.md](conformance.md) for detailed requirements, testing procedures, and migration guides.
 
 ## Related Specifications
 
@@ -121,6 +125,7 @@ IDEs can implement subsets of the standard:
 - [permissions.md](permissions.md) - Permission model
 - [runtime.md](runtime.md) - Runtime requirements
 - [security.md](security.md) - Security model
+- [conformance.md](conformance.md) - Conformance levels and testing
 
 ## Comparison with VS Code WASM
 

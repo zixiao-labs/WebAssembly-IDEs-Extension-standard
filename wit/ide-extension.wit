@@ -25,6 +25,9 @@ world extension {
     // Requires: storage:*
     import ide-extension:core/storage@0.1.0;
 
+    // Requires: core:events (low risk)
+    import ide-extension:core/events@0.1.0;
+
     // Requires: editor:*
     import ide-extension:editor/text@0.1.0;
     import ide-extension:editor/selection@0.1.0;
@@ -51,6 +54,15 @@ world extension {
     // Requires: network:*
     import ide-extension:network/fetch@0.1.0;
     import ide-extension:network/websocket@0.1.0;
+    import ide-extension:network/realtime@0.1.0;
+
+    // ─────────────────────────────────────────────────────────────────
+    // Optional Capability: Collaboration (not in conformance levels)
+    // Requires: collaboration:*
+    // ─────────────────────────────────────────────────────────────────
+    import ide-extension:collaboration/crdt@0.1.0;
+    import ide-extension:collaboration/awareness@0.1.0;
+    import ide-extension:collaboration/session@0.1.0;
 
     // ─────────────────────────────────────────────────────────────────
     // Extension exports (required)
@@ -84,4 +96,36 @@ world language-server {
 
     export ide-extension:core/extension@0.1.0;
     export ide-extension:language/language-server@0.1.0;
+}
+
+/// World for collaborative editing extensions.
+/// Includes all collaboration-related interfaces plus events for synchronization.
+world collaboration-extension {
+    // Core (always available)
+    import ide-extension:core/lifecycle@0.1.0;
+    import ide-extension:core/logging@0.1.0;
+    import ide-extension:core/context@0.1.0;
+    import ide-extension:core/events@0.1.0;
+
+    // Editor access for cursor/selection sync
+    import ide-extension:editor/text@0.1.0;
+    import ide-extension:editor/selection@0.1.0;
+    import ide-extension:editor/decorations@0.1.0;
+
+    // Network for realtime communication
+    import ide-extension:network/realtime@0.1.0;
+
+    // Collaboration interfaces
+    import ide-extension:collaboration/crdt@0.1.0;
+    import ide-extension:collaboration/awareness@0.1.0;
+    import ide-extension:collaboration/session@0.1.0;
+
+    // Required exports
+    export ide-extension:core/extension@0.1.0;
+
+    // Optional handler exports for push-based events
+    export ide-extension:core/event-handler@0.1.0;
+    export ide-extension:collaboration/crdt-handler@0.1.0;
+    export ide-extension:collaboration/awareness-handler@0.1.0;
+    export ide-extension:collaboration/session-handler@0.1.0;
 }

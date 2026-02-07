@@ -1,0 +1,140 @@
+/// Core Events Interface
+///
+/// Provides event subscription and handling for IDE events.
+/// This interface enables extensions to react to changes in files,
+/// workspace, configuration, and other IDE state.
+///
+/// Requires permission: core:events (low risk, typically auto-granted)
+
+package ide-extension:core@0.1.0;
+
+/// Handle for event subscriptions
+type event-handle = u32;
+
+/// Types of events that extensions can subscribe to
+enum event-kind {
+    /// A file was modified
+    file-changed,
+    /// A new file was created
+    file-created,
+    /// A file was deleted
+    file-deleted,
+    /// A file was renamed or moved
+    file-renamed,
+    /// A workspace folder was added or removed
+    workspace-changed,
+    /// User configuration was modified
+    configuration-changed,
+    /// IDE theme was changed
+    theme-changed,
+    /// Active editor/document changed
+    active-editor-changed,
+    /// Editor visibility changed (opened/closed)
+    editor-visibility-changed,
+    /// Terminal session started or ended
+    terminal-changed,
+    /// Extension was installed or uninstalled
+    extension-changed,
+}
+
+/// Data associated with an event
+record event-data {
+    /// The type of event that occurred
+    kind: event-kind,
+    /// Unix timestamp in milliseconds when the event occurred
+    timestamp: u64,
+    /// JSON-encoded payload with event-specific details
+    /// For file events: { "uri": "...", "oldUri": "..." (for renames) }
+    /// For workspace events: { "added": [...], "removed": [...] }
+    /// For configuration events: { "section": "...", "key": "..." }
+    /// For theme events: { "themeId": "...", "kind": "light|dark" }
+    payload: string,
+}
+
+/// Event filter options
+record event-filter {
+    /// Filter by event kinds (empty = all kinds)
+    kinds: list<event-kind>,
+    /// Glob pattern for file events (empty = all files)
+    /// Example: "**/*.ts" to only receive TypeScript file events
+    pattern: option<string>,
+}
+
+/// Events interface for subscribing to IDE events.
+interface events {
+    /// Subscribe to events matching the given filter.
+    /// Returns a handle that can be used to unsubscribe.
+    ///
+    /// # Arguments
+    /// * `filter` - Optional filter to limit which events are received
+    ///
+    /// # Returns
+    /// * `Ok(handle)` - Subscription handle
+    /// * `Err(message)` - If subscription failed
+    subscribe: func(filter: option<event-filter>) -> result<event-handle, string>;
+
+    /// Subscribe to a single event kind (convenience method).
+    ///
+    /// # Arguments
+    /// * `kind` - The type of event to subscribe to
+    ///
+    /// # Returns
+    /// * `Ok(handle)` - Subscription handle
+    /// * `Err(message)` - If subscription failed
+    subscribe-kind: func(kind: event-kind) -> result<event-handle, string>;
+
+    /// Unsubscribe from events using a subscription handle.
+    ///
+    /// # Arguments
+    /// * `handle` - The subscription handle returned from subscribe
+    ///
+    /// # Returns
+    /// * `Ok(_)` - Successfully unsubscribed
+    /// * `Err(message)` - If the handle was invalid
+    unsubscribe: func(handle: event-handle) -> result<_, string>;
+
+    /// Poll for pending events (non-blocking).
+    /// Returns all events that have occurred since the last poll.
+    /// Events are cleared after being returned.
+    ///
+    /// # Returns
+    /// * List of events (may be empty if no events pending)
+    poll: func() -> list<event-data>;
+
+    /// Poll for events with a maximum count.
+    /// Useful for processing events in batches.
+    ///
+    /// # Arguments
+    /// * `max-count` - Maximum number of events to return
+    ///
+    /// # Returns
+    /// * List of events (up to max-count)
+    poll-limited: func(max-count: u32) -> list<event-data>;
+
+    /// Check if there are any pending events.
+    ///
+    /// # Returns
+    /// * `true` if there are events waiting to be processed
+    has-pending: func() -> bool;
+
+    /// Clear all pending events without processing them.
+    clear: func();
+}
+
+/// Event handler interface that extensions can export.
+/// This provides push-based event delivery as an alternative to polling.
+interface event-handler {
+    /// Called when an event occurs.
+    /// Extensions should handle events quickly to avoid blocking.
+    ///
+    /// # Arguments
+    /// * `event` - The event data
+    on-event: func(event: event-data);
+
+    /// Called when a batch of events occurs (for high-frequency events).
+    /// This is more efficient than calling on-event repeatedly.
+    ///
+    /// # Arguments
+    /// * `events` - List of events that occurred
+    on-events: func(events: list<event-data>);
+}

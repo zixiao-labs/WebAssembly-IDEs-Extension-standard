@@ -1,0 +1,187 @@
+/// Collaboration Awareness Interface
+///
+/// Provides awareness (presence) information for collaborative sessions.
+/// This enables features like showing other users' cursor positions,
+/// selections, and online status.
+///
+/// Requires permission: collaboration:awareness (medium risk)
+
+package ide-extension:collaboration@0.1.0;
+
+/// Handle for awareness subscription
+type awareness-handle = u32;
+
+/// User presence state
+enum presence-state {
+    /// User is actively working
+    active,
+    /// User is idle (no recent activity)
+    idle,
+    /// User is away (explicitly set or long idle)
+    away,
+    /// User is offline
+    offline,
+}
+
+/// Cursor position in a document
+record cursor-position {
+    /// Document URI
+    uri: string,
+    /// Line number (0-indexed)
+    line: u32,
+    /// Column number (0-indexed)
+    column: u32,
+}
+
+/// Selection range in a document
+record selection-range {
+    /// Document URI
+    uri: string,
+    /// Start line (0-indexed)
+    start-line: u32,
+    /// Start column (0-indexed)
+    start-column: u32,
+    /// End line (0-indexed)
+    end-line: u32,
+    /// End column (0-indexed)
+    end-column: u32,
+}
+
+/// Awareness state for a single user
+record user-awareness {
+    /// Unique user identifier
+    user-id: string,
+    /// Display name
+    name: string,
+    /// User's avatar URL (optional)
+    avatar-url: option<string>,
+    /// Assigned color for this user (hex, e.g., "#FF5733")
+    color: string,
+    /// Current presence state
+    presence: presence-state,
+    /// Current cursor position (if in a document)
+    cursor: option<cursor-position>,
+    /// Current selections (may be multiple)
+    selections: list<selection-range>,
+    /// Custom state (JSON-encoded application-specific data)
+    custom-state: option<string>,
+    /// Last activity timestamp (Unix ms)
+    last-activity: u64,
+}
+
+/// Local user's awareness state to broadcast
+record local-awareness-state {
+    /// Current cursor position
+    cursor: option<cursor-position>,
+    /// Current selections
+    selections: list<selection-range>,
+    /// Custom state (JSON-encoded)
+    custom-state: option<string>,
+}
+
+/// Awareness update event
+record awareness-update {
+    /// User whose state changed
+    user-id: string,
+    /// New awareness state
+    state: user-awareness,
+    /// Type of change
+    change-type: awareness-change-type,
+}
+
+/// Type of awareness change
+enum awareness-change-type {
+    /// User joined the session
+    joined,
+    /// User's state was updated
+    updated,
+    /// User left the session
+    left,
+}
+
+/// Awareness interface for presence and cursor sharing.
+interface awareness {
+    /// Set the local user's awareness state.
+    /// This will be broadcast to other collaborators.
+    ///
+    /// # Arguments
+    /// * `state` - Local awareness state to broadcast
+    ///
+    /// # Returns
+    /// * `Ok(_)` - State updated
+    /// * `Err(message)` - If update failed
+    set-local-state: func(state: local-awareness-state) -> result<_, string>;
+
+    /// Update specific fields of local awareness state.
+    ///
+    /// # Arguments
+    /// * `cursor` - New cursor position (None to keep current)
+    /// * `selections` - New selections (None to keep current)
+    update-cursor: func(cursor: option<cursor-position>, selections: option<list<selection-range>>);
+
+    /// Set custom application-specific state.
+    ///
+    /// # Arguments
+    /// * `custom-state` - JSON-encoded custom state
+    set-custom-state: func(custom-state: string);
+
+    /// Get awareness states for all users in the session.
+    ///
+    /// # Returns
+    /// * List of all user awareness states
+    get-states: func() -> list<user-awareness>;
+
+    /// Get awareness state for a specific user.
+    ///
+    /// # Arguments
+    /// * `user-id` - User identifier
+    ///
+    /// # Returns
+    /// * `Some(state)` - User's awareness state
+    /// * `None` - If user not found
+    get-user-state: func(user-id: string) -> option<user-awareness>;
+
+    /// Get the local user's ID.
+    ///
+    /// # Returns
+    /// * Local user identifier
+    get-local-user-id: func() -> string;
+
+    /// Subscribe to awareness updates.
+    ///
+    /// # Returns
+    /// * `Ok(handle)` - Subscription handle
+    /// * `Err(message)` - If subscription failed
+    subscribe: func() -> result<awareness-handle, string>;
+
+    /// Unsubscribe from awareness updates.
+    ///
+    /// # Arguments
+    /// * `handle` - Subscription handle
+    ///
+    /// # Returns
+    /// * `Ok(_)` - Unsubscribed
+    /// * `Err(message)` - If handle was invalid
+    unsubscribe: func(handle: awareness-handle) -> result<_, string>;
+
+    /// Poll for awareness updates (non-blocking).
+    ///
+    /// # Returns
+    /// * List of awareness updates since last poll
+    poll-updates: func() -> list<awareness-update>;
+}
+
+/// Awareness event handler that extensions can export.
+interface awareness-handler {
+    /// Called when awareness state changes.
+    ///
+    /// # Arguments
+    /// * `update` - The awareness update
+    on-awareness-update: func(update: awareness-update);
+
+    /// Called when multiple awareness updates occur.
+    ///
+    /// # Arguments
+    /// * `updates` - List of awareness updates
+    on-awareness-updates: func(updates: list<awareness-update>);
+}

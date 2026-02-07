@@ -28,20 +28,64 @@ This standard defines a common interface for IDE extensions compiled to WebAssem
 │       ├── manifest.md      # Manifest format specification
 │       ├── permissions.md   # Permission model specification
 │       ├── runtime.md       # Runtime requirements
-│       └── security.md      # Security model
+│       ├── security.md      # Security model
+│       └── conformance.md   # Conformance levels and testing
 ├── wit/                     # WIT interface definitions
 │   ├── ide-extension.wit    # Main world definition
-│   ├── core/                # Core interfaces
+│   ├── core/                # Core interfaces (lifecycle, logging, events)
 │   ├── editor/              # Editor interfaces
 │   ├── workspace/           # Workspace interfaces
 │   ├── ui/                  # UI interfaces
 │   ├── language/            # Language feature interfaces
-│   └── network/             # Network interfaces
+│   ├── network/             # Network interfaces (fetch, websocket, realtime)
+│   └── collaboration/       # Collaboration interfaces (crdt, awareness, session)
 ├── schemas/                 # JSON Schemas
 │   └── manifest.schema.json # Manifest validation schema
+├── proposals/               # RFC proposals
+│   ├── v1.0-rfc.md         # v1.0 stabilization proposal
+│   └── zed-adoption-rfc.md # Zed adoption proposal
+├── tests/                   # Conformance test suite
+│   ├── conformance/        # Level-based tests (0-5)
+│   ├── optional/           # Optional capability tests
+│   ├── harness/            # Test infrastructure
+│   └── fixtures/           # Test fixtures
 └── examples/                # Example extensions
     └── hello-world/         # Minimal example
 ```
+
+## Conformance Levels
+
+IDEs can implement subsets of the standard progressively:
+
+| Level | Name | Key Capabilities |
+|-------|------|------------------|
+| 0 | Minimal | Lifecycle, logging only |
+| 1 | Basic | + Commands, notifications, storage, events |
+| 2 | Editor | + Text editing, decorations |
+| 3 | Workspace | + File system, project structure |
+| 4 | Language | + Completions, diagnostics, navigation |
+| 5 | Full | + Network, webviews, secrets |
+
+See [spec/0.1/conformance.md](spec/0.1/conformance.md) for detailed requirements and testing procedures.
+
+## Optional Capabilities
+
+Beyond conformance levels, the standard defines optional capabilities for specialized features:
+
+| Capability | Description | Interfaces |
+|------------|-------------|------------|
+| `collaboration` | Real-time multi-user editing | crdt, awareness, session |
+| `realtime` | Pub/sub messaging channels | network/realtime |
+
+Extensions declare optional capabilities in their manifest:
+
+```json
+{
+  "optionalCapabilities": ["collaboration"]
+}
+```
+
+This allows extensions to gracefully degrade when capabilities are unavailable.
 
 ## Quick Start
 

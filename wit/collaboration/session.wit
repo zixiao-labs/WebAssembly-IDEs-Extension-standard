@@ -1,0 +1,311 @@
+/// Collaboration Session Interface
+///
+/// Provides session management for collaborative editing sessions.
+/// Sessions group participants and manage permissions for collaborative
+/// features like CRDT documents and awareness.
+///
+/// Requires permission: collaboration:session (high risk)
+
+package ide-extension:collaboration@0.1.0;
+
+/// Unique session identifier
+type session-id = string;
+
+/// Session participant role
+enum participant-role {
+    /// Full read/write access
+    owner,
+    /// Can edit documents
+    editor,
+    /// Can only view documents
+    viewer,
+}
+
+/// Session visibility
+enum session-visibility {
+    /// Only invited users can join
+    private,
+    /// Anyone with link can join (as viewer)
+    link-sharing,
+    /// Anyone with link can join (as editor)
+    link-sharing-editable,
+    /// Discoverable within organization
+    organization,
+}
+
+/// Information about a session participant
+record participant-info {
+    /// User identifier
+    user-id: string,
+    /// Display name
+    name: string,
+    /// Avatar URL (optional)
+    avatar-url: option<string>,
+    /// Participant's role
+    role: participant-role,
+    /// When the user joined (Unix ms)
+    joined-at: u64,
+    /// Whether currently connected
+    is-connected: bool,
+}
+
+/// Session information
+record session-info {
+    /// Unique session identifier
+    id: session-id,
+    /// Human-readable session name
+    name: string,
+    /// Session description (optional)
+    description: option<string>,
+    /// Session visibility setting
+    visibility: session-visibility,
+    /// Session owner's user ID
+    owner-id: string,
+    /// List of participants
+    participants: list<participant-info>,
+    /// When session was created (Unix ms)
+    created-at: u64,
+    /// Associated workspace/project path (optional)
+    workspace-path: option<string>,
+    /// Maximum allowed participants (0 = unlimited)
+    max-participants: u32,
+}
+
+/// Options for creating a session
+record create-session-options {
+    /// Session name
+    name: string,
+    /// Session description
+    description: option<string>,
+    /// Visibility setting
+    visibility: session-visibility,
+    /// Maximum participants (0 = unlimited)
+    max-participants: option<u32>,
+    /// Workspace path to associate
+    workspace-path: option<string>,
+}
+
+/// Options for joining a session
+record join-session-options {
+    /// Session ID to join
+    session-id: session-id,
+    /// Invite code (for private sessions)
+    invite-code: option<string>,
+}
+
+/// Invite information
+record invite-info {
+    /// Unique invite code
+    code: string,
+    /// When the invite expires (Unix ms, 0 = never)
+    expires-at: u64,
+    /// Maximum uses (0 = unlimited)
+    max-uses: u32,
+    /// Current use count
+    use-count: u32,
+    /// Role assigned to users who join via this invite
+    role: participant-role,
+}
+
+/// Session event types
+enum session-event-type {
+    /// A participant joined
+    participant-joined,
+    /// A participant left
+    participant-left,
+    /// A participant's role changed
+    participant-role-changed,
+    /// Session settings were updated
+    session-updated,
+    /// Session is ending
+    session-ending,
+}
+
+/// Session event data
+record session-event {
+    /// Event type
+    event-type: session-event-type,
+    /// Session ID
+    session-id: session-id,
+    /// Affected user (for participant events)
+    user-id: option<string>,
+    /// JSON-encoded additional data
+    payload: option<string>,
+    /// Event timestamp (Unix ms)
+    timestamp: u64,
+}
+
+/// Session management interface.
+interface session {
+    /// Create a new collaboration session.
+    ///
+    /// # Arguments
+    /// * `options` - Session creation options
+    ///
+    /// # Returns
+    /// * `Ok(session-id)` - Created session ID
+    /// * `Err(message)` - If creation failed
+    create: func(options: create-session-options) -> result<session-id, string>;
+
+    /// Join an existing session.
+    ///
+    /// # Arguments
+    /// * `options` - Join options
+    ///
+    /// # Returns
+    /// * `Ok(_)` - Successfully joined
+    /// * `Err(message)` - If join failed (invalid ID, no permission, full)
+    join: func(options: join-session-options) -> result<_, string>;
+
+    /// Leave the current session.
+    ///
+    /// # Returns
+    /// * `Ok(_)` - Successfully left
+    /// * `Err(message)` - If not in a session
+    leave: func() -> result<_, string>;
+
+    /// End a session (owner only).
+    /// This disconnects all participants.
+    ///
+    /// # Arguments
+    /// * `session-id` - Session to end
+    ///
+    /// # Returns
+    /// * `Ok(_)` - Session ended
+    /// * `Err(message)` - If not owner or invalid session
+    end-session: func(session-id: session-id) -> result<_, string>;
+
+    /// Get information about a session.
+    ///
+    /// # Arguments
+    /// * `session-id` - Session to query
+    ///
+    /// # Returns
+    /// * `Ok(info)` - Session information
+    /// * `Err(message)` - If session not found or no access
+    get-info: func(session-id: session-id) -> result<session-info, string>;
+
+    /// Get the current session (if joined).
+    ///
+    /// # Returns
+    /// * `Some(info)` - Current session info
+    /// * `None` - If not in a session
+    get-current-session: func() -> option<session-info>;
+
+    /// List sessions the user is participating in or has access to.
+    ///
+    /// # Returns
+    /// * List of session info
+    list-sessions: func() -> list<session-info>;
+
+    /// Create an invite for a session.
+    ///
+    /// # Arguments
+    /// * `session-id` - Session to create invite for
+    /// * `role` - Role to assign to invited users
+    /// * `expires-in-ms` - Expiration time (0 = never)
+    /// * `max-uses` - Maximum uses (0 = unlimited)
+    ///
+    /// # Returns
+    /// * `Ok(invite)` - Created invite info
+    /// * `Err(message)` - If not authorized
+    create-invite: func(
+        session-id: session-id,
+        role: participant-role,
+        expires-in-ms: u64,
+        max-uses: u32
+    ) -> result<invite-info, string>;
+
+    /// Revoke an invite.
+    ///
+    /// # Arguments
+    /// * `session-id` - Session the invite belongs to
+    /// * `invite-code` - Invite code to revoke
+    ///
+    /// # Returns
+    /// * `Ok(_)` - Invite revoked
+    /// * `Err(message)` - If not found or not authorized
+    revoke-invite: func(session-id: session-id, invite-code: string) -> result<_, string>;
+
+    /// Kick a participant from a session.
+    ///
+    /// # Arguments
+    /// * `session-id` - Session to kick from
+    /// * `user-id` - User to kick
+    ///
+    /// # Returns
+    /// * `Ok(_)` - User kicked
+    /// * `Err(message)` - If not authorized or user not found
+    kick: func(session-id: session-id, user-id: string) -> result<_, string>;
+
+    /// Change a participant's role.
+    ///
+    /// # Arguments
+    /// * `session-id` - Session to modify
+    /// * `user-id` - User to change
+    /// * `new-role` - New role to assign
+    ///
+    /// # Returns
+    /// * `Ok(_)` - Role changed
+    /// * `Err(message)` - If not authorized
+    set-participant-role: func(
+        session-id: session-id,
+        user-id: string,
+        new-role: participant-role
+    ) -> result<_, string>;
+
+    /// Update session settings.
+    ///
+    /// # Arguments
+    /// * `session-id` - Session to update
+    /// * `name` - New name (None to keep current)
+    /// * `description` - New description (None to keep current)
+    /// * `visibility` - New visibility (None to keep current)
+    ///
+    /// # Returns
+    /// * `Ok(_)` - Settings updated
+    /// * `Err(message)` - If not authorized
+    update-settings: func(
+        session-id: session-id,
+        name: option<string>,
+        description: option<string>,
+        visibility: option<session-visibility>
+    ) -> result<_, string>;
+
+    /// Poll for session events.
+    ///
+    /// # Returns
+    /// * List of session events since last poll
+    poll-events: func() -> list<session-event>;
+}
+
+/// Session event handler that extensions can export.
+interface session-handler {
+    /// Called when a participant joins the session.
+    ///
+    /// # Arguments
+    /// * `session-id` - Session ID
+    /// * `participant` - Info about the new participant
+    on-participant-join: func(session-id: session-id, participant: participant-info);
+
+    /// Called when a participant leaves the session.
+    ///
+    /// # Arguments
+    /// * `session-id` - Session ID
+    /// * `user-id` - ID of the user who left
+    on-participant-leave: func(session-id: session-id, user-id: string);
+
+    /// Called when the session is ending.
+    ///
+    /// # Arguments
+    /// * `session-id` - Session ID
+    /// * `reason` - Reason for ending (JSON-encoded)
+    on-session-end: func(session-id: session-id, reason: string);
+
+    /// Called when session settings change.
+    ///
+    /// # Arguments
+    /// * `session-id` - Session ID
+    /// * `info` - Updated session info
+    on-session-update: func(session-id: session-id, info: session-info);
+}

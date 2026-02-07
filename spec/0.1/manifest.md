@@ -248,6 +248,27 @@ Compatibility requirements.
 }
 ```
 
+### `conformanceLevel`
+
+**Type:** `integer` (0-5)
+
+Minimum conformance level required from the host IDE. If the IDE's conformance level is lower, it should warn the user or refuse installation. See [conformance.md](conformance.md) for level definitions.
+
+```json
+{
+  "conformanceLevel": 3
+}
+```
+
+| Level | Name | When to Use |
+|-------|------|-------------|
+| 0 | Minimal | Extension only uses lifecycle/logging |
+| 1 | Basic | Extension uses commands, notifications |
+| 2 | Editor | Extension manipulates document text |
+| 3 | Workspace | Extension accesses file system |
+| 4 | Language | Extension provides language features |
+| 5 | Full | Extension requires network or webviews |
+
 ### `categories`
 
 **Type:** `array<string>`

@@ -8,6 +8,7 @@
   "runtime": "wasm32-wasi",
   "main": "hello_world.wasm",
   "standardVersion": "0.1.0",
+  "conformanceLevel": 1,
   "categories": ["Other"],
   "activationEvents": [
     "onCommand:helloWorld.sayHello"
